@@ -11,7 +11,10 @@ Atribuir um numero de job unico a tupla <arq_exec>
 Colocar na estrutura de dados compartilhado 
 **/
 
-#include <executa_postergado>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
 int is_num(const char * argv){
 	int tam = strlen(argv);
