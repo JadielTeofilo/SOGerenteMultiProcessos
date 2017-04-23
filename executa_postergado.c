@@ -75,19 +75,21 @@ int main(int argc, char *argv[])
 	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
-	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, IPC_NOWAIT) < 0){
+	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
-   	// printf("mensagem recebida = %d\n", job_anterior);
+   	printf("mensagem recebida = %d\n", job_anterior);
+
 
 	//Criar estrutura para colocar arq_exec novo job e data
 	mensagem.job = job_anterior + 1;
 	mensagem.arq_exec = (char*) malloc(strlen(argv[2])*sizeof(char));
+	strcpy(mensagem.arq_exec, argv[2]);
     /* Obtain current time. */
 	mensagem.data = time(NULL) + atoi(argv[1]);
 	 
-    /* Conveter para string a data*/
+    // Conveter para string a data
     c_time_string = ctime(&mensagem.data);
     printf("job = %d\n", mensagem.job);
     printf("arquivo = %s\n", mensagem.arq_exec);

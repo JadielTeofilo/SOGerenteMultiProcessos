@@ -40,7 +40,7 @@ void excluir_fila(int idfila){
 
 
 void escalonar(){
-	int job_anterior = -1;
+	int job_anterior = 1;
 	int idfila = -1;
 
    	idfila = criar_fila();
