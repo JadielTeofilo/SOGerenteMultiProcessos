@@ -1,6 +1,11 @@
-all: executa_postergado
+all: build
 
-main: gcc executa_postergado.o -o
-	exe
+build: executa_postergado.o
+	gcc executa_postergado.o -o exe
 
-executa_postergado: cc executa_postergado.c -o a
+executa_postergado.o: executa_postergado.c
+	gcc -c executa_postergado.c
+
+
+clean: 
+	rm *.o
