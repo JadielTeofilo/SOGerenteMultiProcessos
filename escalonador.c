@@ -16,42 +16,26 @@ struct jobTable
 #include <unistd.h>
 
 
-void enviar_num_job(int job_anterior, int idfila){
 
-   	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
-}
 
-int criar_fila(){
+void escalonar(){
+
+    int job_anterior;
 
    	int idfila = 0; 
-	/* cria a fila*/
+ 
+   	/* cria a fila*/
    	if ((idfila = msgget(0x1223, IPC_CREAT|0x1B6)) < 0)
    	{
      	printf("erro na criacao da fila\n");
      	exit(1);
    	}
-   	// printf("id escalonar = %d\n", idfila);
-   	return idfila;
-}
+   	// printf("%d\n", idfila);
 
-void excluir_fila(int idfila){
-   	msgctl(idfila, IPC_RMID, 0);
-}
-
-
-void escalonar(){
-	int job_anterior = 1;
-	int idfila = -1;
-
-   	idfila = criar_fila();
-   	//envia de inicio para a fila de jobs utilizados o -1
-   	enviar_num_job(job_anterior, idfila);
-
-
+   	job_anterior = 42;
+   	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
    	sleep(60);
-
-
-   	excluir_fila(idfila);
+   	msgctl(idfila, IPC_RMID, 0);
 }
 
 

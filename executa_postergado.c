@@ -19,13 +19,12 @@ Colocar na estrutura de dados compartilhado
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <time.h>
 
 struct jobTable
 {
 	int job;
 	char * arq_exec;
-	time_t data;
+	char * data;
 
 }typedef jobTableType;
 
@@ -47,11 +46,7 @@ int is_num(const char * argv){
 
 int main(int argc, char *argv[])
 {
-	time_t current_time;
-	char* c_time_string;
 	int job_anterior = -1;
-	int idfila;
-	jobTableType mensagem;
 
 	//Verifica o numero de parametros
 	if (argc != 3){
@@ -66,34 +61,16 @@ int main(int argc, char *argv[])
 	is_num(seg);
 
 
-	if(msgget(0x1223, 0x1B6) < 0){
-		printf("Nenhuma fila encontrada \n");
-		exit(1);
-	}
 
-	idfila = msgget(0x1223, 0x1B6);
-	// printf("%d\n", idfila);
+	int idfila = msgget(0x1223, 0x1B6);
+	printf("%d\n", idfila);
 
-	//Recebe o ultimo job
-	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
-		printf("Nenhum numero de job encontrado na fila\n");
-		exit(1);
-	}
+	msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0);
    	printf("mensagem recebida = %d\n", job_anterior);
 
 
-	//Criar estrutura para colocar arq_exec novo job e data
-	mensagem.job = job_anterior + 1;
-	mensagem.arq_exec = (char*) malloc(strlen(argv[2])*sizeof(char));
-	strcpy(mensagem.arq_exec, argv[2]);
-    /* Obtain current time. */
-	mensagem.data = time(NULL) + atoi(argv[1]);
-	 
-    // Conveter para string a data
-    c_time_string = ctime(&mensagem.data);
-    printf("job = %d\n", mensagem.job);
-    printf("arquivo = %s\n", mensagem.arq_exec);
-    printf("%s\n", c_time_string);
+
+
 
 	return 0;
 }
