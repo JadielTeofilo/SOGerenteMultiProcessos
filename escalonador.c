@@ -17,7 +17,7 @@ struct jobTable
 
 
 void enviar_num_job(int job_anterior, int idfila){
-
+    //msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
    	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
 }
 

@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
 	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
+	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, 0) < 0){
 	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
