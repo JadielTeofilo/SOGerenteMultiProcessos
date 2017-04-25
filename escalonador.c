@@ -17,8 +17,8 @@ struct jobTable
 
 
 void enviar_num_job(int job_anterior, int idfila){
-    //msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
-   	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
+    msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
+   	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
 }
 
 int criar_fila(){
@@ -48,7 +48,7 @@ void escalonar(){
    	enviar_num_job(job_anterior, idfila);
 
 
-   	sleep(60);
+   	sleep(20);
 
 
    	excluir_fila(idfila);
