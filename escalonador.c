@@ -1,10 +1,4 @@
-struct jobTable
-{
-	int job;
-	char * arq_exec;
-	char * data;
-
-}typedef jobTableType;
+#include "executa_postergado.h"
 
 
 #include <stdio.h>
@@ -16,7 +10,7 @@ struct jobTable
 #include <unistd.h>
 
 
-void enviar_num_job(int job_anterior, int idfila){
+void enviar_num_job(jobNumType job_anterior, int idfila){
     msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
    	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
 }
@@ -40,7 +34,8 @@ void excluir_fila(int idfila){
 
 
 void escalonar(){
-	int job_anterior = 1;
+	jobNumType job_anterior;
+    job_anterior.job_num = 1;
 	int idfila = -1;
 
    	idfila = criar_fila();
@@ -48,7 +43,7 @@ void escalonar(){
    	enviar_num_job(job_anterior, idfila);
 
 
-   	sleep(20);
+   	sleep(5);
 
 
    	excluir_fila(idfila);

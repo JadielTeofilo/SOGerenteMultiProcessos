@@ -31,10 +31,12 @@ int is_num(const char * argv){
 //Recebe mensagem do escalonador com o identificador do ultimo job
 int pegar_ultimo_job(){
 	
-	int job_anterior = 1;
-	int job_aux;
+	jobNumType job_anterior;
+	job_anterior.job_num = 1;
+	int num_aux = 0;
 	int idfila;
 
+	//Verifica a existencia de filas 
 	if(msgget(0x1223, 0x1B6) < 0){
 		printf("Nenhuma fila encontrada \n");
 		exit(1);
@@ -49,12 +51,11 @@ int pegar_ultimo_job(){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
-   	printf("mensagem recebida = %d\n", job_anterior);
+   	printf("mensagem recebida = %d\n", job_anterior.job_num);
 
-   	job_aux = job_anterior;
+   	num_aux = job_anterior.job_num;
 
-
-   	return job_aux;
+   	return num_aux;
 }
 
 
