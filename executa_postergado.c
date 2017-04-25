@@ -11,23 +11,7 @@ Atribuir um numero de job unico a tupla <arq_exec>
 Colocar na estrutura de dados compartilhado 
 **/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <time.h>
-
-struct jobTable
-{
-	int job;
-	char * arq_exec;
-	time_t data;
-
-}typedef jobTableType;
+#include "executa_postergado.h"
 
 
 
@@ -48,6 +32,7 @@ int is_num(const char * argv){
 int pegar_ultimo_job(){
 	
 	int job_anterior = 1;
+	int job_aux;
 	int idfila;
 
 	if(msgget(0x1223, 0x1B6) < 0){
@@ -66,8 +51,10 @@ int pegar_ultimo_job(){
 	}
    	printf("mensagem recebida = %d\n", job_anterior);
 
+   	job_aux = job_anterior;
 
-   	return job_anterior;
+
+   	return job_aux;
 }
 
 
