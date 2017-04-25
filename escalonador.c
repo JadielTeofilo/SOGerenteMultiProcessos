@@ -1,6 +1,13 @@
-#include "escalonador.h"
+#include "executa_postergado.h"
 
 
+#include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
@@ -26,48 +33,44 @@ void excluir_fila(int idfila){
 }
 
 
-jobTableType * ler_estrutura(int idfila){
-  
-  jobTableType * estrutura;
-  printf("%d\n", idfila);
+void ler_estrutura(int idfila){
+  jobTableType * mensagem_ptr = (jobTableType*) malloc(sizeof(jobTableType));
 
   //Recebe o ultimo job
-  if (msgrcv(idfila, &estrutura, sizeof(estrutura), 0, 0) < 0){
-  //if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
-
+  precisa corrigir isso, de resto acho q teoricamente funciona, tah dando overflow
+  if (msgrcv(idfila, mensagem_ptr, sizeof(mensagem_ptr), 0, 0) < 0){
+  //if (msgrcv(idfila, &estrutura, sizeof(estrutura)-sizeof(long), 0, IPC_NOWAIT) < 0){
     printf("Nenhum estrutura na fila\n");
     exit(1);
   }
-    printf("job = %d\n", estrutura->job);
-    printf("arquivo = %s\n", estrutura->arq_exec);
-   // printf("%s\n", estrutura->data);
-    //printf("mensagem recebida = %d\n", job_anterior.job_num);
 
+    printf("job = %d\n\n", mensagem_ptr->job);
+    //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
 
-
-    return estrutura;
+//return mensagem_ptr;
 }
 
 
 void escalonar(){
+  struct jobTable mensagem_ptr;
+
 	jobNumType job_anterior;
-    job_anterior.job_num = -1;
-	int idfila_job = -1;
+    job_anterior.job_num = 1;
+	int idfila = -1;
   int idfila_estrutura = -1;
 
-   	idfila_job = criar_fila(0x1223);
+   	idfila = criar_fila(0x1223);
    	//envia de inicio para a fila de jobs utilizados o -1
-   	enviar_num_job(job_anterior, idfila_job);
+   	enviar_num_job(job_anterior, idfila);
 
-    //printf("oi\n");
-
-   	sleep(10);
     idfila_estrutura = criar_fila(0x1224);
 
     ler_estrutura(idfila_estrutura);
 
+    //printf("job = %d\n", mensagem_ptr->job);
+    //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
+    excluir_fila(idfila);
     excluir_fila(idfila_estrutura);
-   	excluir_fila(idfila_job);
 
 }
 
