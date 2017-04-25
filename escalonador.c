@@ -1,13 +1,6 @@
-#include "executa_postergado.h"
+#include "escalonador.h"
 
 
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
@@ -35,7 +28,7 @@ void excluir_fila(int idfila){
 
 void escalonar(){
 	jobNumType job_anterior;
-    job_anterior.job_num = 1;
+    job_anterior.job_num = -1;
 	int idfila = -1;
 
    	idfila = criar_fila();
