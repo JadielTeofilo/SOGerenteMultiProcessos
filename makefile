@@ -14,4 +14,4 @@ escalonador.o: escalonador.c
 
 
 clean: 
-	rm *.o
+	rm *.o *.gch
