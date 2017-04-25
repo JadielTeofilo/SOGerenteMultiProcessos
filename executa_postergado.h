@@ -23,6 +23,7 @@ Colocar na estrutura de dados compartilhado
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <time.h>
+#include <unistd.h>
 
 struct jobTable
 {

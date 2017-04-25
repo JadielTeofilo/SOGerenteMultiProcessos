@@ -12,6 +12,18 @@ Colocar na estrutura de dados compartilhado
 **/
 
 #include "executa_postergado.h"
+void enviar_estrutura(jobTableType * estrutura){
+	if(msgget(0x1223, 0x1B6) < 0){
+		printf("Nenhuma fila encontrada \n");
+		exit(1);
+	}
+
+	int idfila = msgget(0x1223, 0x1B6);
+
+    msgsnd(idfila, &estrutura, sizeof(estrutura), 0);
+    printf("mensagem enviada\n");
+   	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
+}
 
 
 
@@ -46,7 +58,7 @@ int pegar_ultimo_job(){
 	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
-	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, 0) < 0){
+	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, IPC_NOWAIT) < 0){
 	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
@@ -54,6 +66,7 @@ int pegar_ultimo_job(){
    	printf("mensagem recebida = %d\n", job_anterior.job_num);
 
    	num_aux = job_anterior.job_num;
+
 
    	return num_aux;
 }
@@ -86,6 +99,7 @@ int main(int argc, char *argv[])
 	char* c_time_string;
 	int job_anterior = 1;
 	jobTableType * mensagem_ptr;
+	int idfila=-1;
 
 	//Verifica o numero de parametros
 	if (argc != 3){
@@ -112,6 +126,12 @@ int main(int argc, char *argv[])
     printf("job = %d\n", mensagem_ptr->job);
     printf("arquivo = %s\n", mensagem_ptr->arq_exec);
     printf("%s\n", c_time_string);
+
+
+
+
+    enviar_estrutura(mensagem_ptr);
+
 
 	return 0;
 }

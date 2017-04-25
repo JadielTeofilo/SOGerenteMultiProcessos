@@ -15,4 +15,5 @@ Escalonador importacoes e definicoes
 #include <sys/msg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
