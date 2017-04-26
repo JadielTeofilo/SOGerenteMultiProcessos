@@ -29,6 +29,15 @@ int is_num(const char * argv){
 	}
 }
 
+int verificar_num_param(int num){
+
+	//Verifica o numero de parametros
+	if (num != 3){
+		printf("Num de parametros invalido\n");
+		exit(0);
+	}
+}
+
 //Recebe mensagem do escalonador com o identificador do ultimo job
 int pegar_ultimo_job(){
 	
@@ -60,7 +69,7 @@ int pegar_ultimo_job(){
 }
 
 
-void criar_enviar_estrutura(int job_anterior, const char* arq_exec, const char* segundos){
+void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* segundos){
 	
 	int idfila;
 	jobTableType mensagem;
@@ -81,9 +90,9 @@ void criar_enviar_estrutura(int job_anterior, const char* arq_exec, const char* 
     //acha id da fila
 	idfila = msgget(0x1224, 0x1B6);
 	//enviar a fila
-    if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) >= 0){
+    if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) < 0){
     //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) >= 0){
-		printf("mensagem enviada\n");
+		printf("Problema ao enviar as info do novo job\n");
 	}
 
 }
@@ -95,12 +104,8 @@ int main(int argc, char *argv[])
 	int job_anterior = -1;
 	const char * seg = argv[1];
 
-	//Verifica o numero de parametros
-	if (argc != 3){
-		printf("Num de parametros invalido\n");
-		exit(0);
-	}
-
+	//Verifica se o numero de parametros estah certo
+	verificar_num_param(argc);
 
 	
 	//Verifica se o numero de segundos eh um numero
@@ -111,7 +116,7 @@ int main(int argc, char *argv[])
 
 
 	//Cria e evia estrutura com arq_exec novo job e data
-	criar_enviar_estrutura(job_anterior, argv[2], argv[1]);
+	criar_enviar_novo_job(job_anterior, argv[2], argv[1]);
 
 
 
