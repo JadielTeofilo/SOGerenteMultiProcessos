@@ -1,6 +1,6 @@
 # SOGerenteMultiProcessos
 
-##Comandos para rodar
+## Comandos para rodar
 
  * make
  * ./binary/escalonador &
