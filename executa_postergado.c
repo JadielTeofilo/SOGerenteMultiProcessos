@@ -8,7 +8,8 @@ Input
 Output
 
 Atribuir um numero de job unico a tupla <arq_exec> 
-Colocar na estrutura de dados compartilhado 
+Colocar na estrutura de dados compartilhado e enviar para a fila de
+mensagens
 **/
 
 #include "executa_postergado.h"
@@ -109,7 +110,7 @@ int main(int argc, char *argv[])
 	job_anterior = pegar_ultimo_job();
 
 
-	//Criar estrutura para colocar arq_exec novo job e data
+	//Cria e evia estrutura com arq_exec novo job e data
 	criar_enviar_estrutura(job_anterior, argv[2], argv[1]);
 
 
