@@ -32,7 +32,6 @@ void ler_estrutura_da_fila(int idfila){
 
 
 void escalonar(){
-    struct jobTable mensagem_ptr;
 
 	jobNumType job_anterior;
     job_anterior.job_num = 1;
