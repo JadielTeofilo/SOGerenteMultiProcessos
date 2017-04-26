@@ -67,7 +67,6 @@ void criar_enviar_estrutura(int job_anterior, const char* arq_exec, const char* 
 	mensagem.job = job_anterior + 1;
 	
 	//aloca e passa o nome do executavel para a estrutura
-	mensagem.arq_exec = (char*) malloc(strlen(arq_exec)*sizeof(char));
 	strcpy(mensagem.arq_exec, arq_exec);
 
     /* Obter horario atual e somar com os segundos requisitados*/

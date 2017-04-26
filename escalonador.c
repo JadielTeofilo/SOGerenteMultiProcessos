@@ -24,7 +24,7 @@ void ler_estrutura_da_fila(int idfila){
     // Conveter para string a data
     c_time_string = ctime(&mensagem.data);
     printf("::job = %d\n", mensagem.job);
-    // printf("::arquivo = %s\n", mensagem.arq_exec);
+    printf("::arquivo = %s\n", mensagem.arq_exec);
     printf("::%s\n", c_time_string);
 
 //return mensagem_ptr;

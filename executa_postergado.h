@@ -28,7 +28,7 @@ Colocar na estrutura de dados compartilhado
 struct jobTable
 {
 	int job;
-	char * arq_exec;
+	char arq_exec[6969];
 	time_t data;
 
 }typedef jobTableType;
