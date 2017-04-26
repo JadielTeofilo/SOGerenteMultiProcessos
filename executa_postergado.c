@@ -46,8 +46,8 @@ int pegar_ultimo_job(){
 	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
-	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, 0) < 0){
-	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
+	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, IPC_NOWAIT) < 0){
+	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
@@ -59,34 +59,32 @@ int pegar_ultimo_job(){
 }
 
 
-//Retorna ponteiro para a estrutura
-jobTableType * criar_estrutura_mensagem(int job_anterior, const char * arq_exec, const char * segundos){
-
-
-	jobTableType * mensagem_ptr = (jobTableType*) malloc(sizeof(jobTableType));
-
-
+void criar_enviar_estrutura(int job_anterior, const char* arq_exec, const char* segundos){
+	
+	int idfila;
+	jobTableType mensagem;
 	//define o identificador unico do job como o anterior + 1
-	mensagem_ptr->job = job_anterior + 1;
+	mensagem.job = job_anterior + 1;
 	
 	//aloca e passa o nome do executavel para a estrutura
-	mensagem_ptr->arq_exec = (char*) malloc(strlen(arq_exec)*sizeof(char));
-	strcpy(mensagem_ptr->arq_exec, arq_exec);
+	mensagem.arq_exec = (char*) malloc(strlen(arq_exec)*sizeof(char));
+	strcpy(mensagem.arq_exec, arq_exec);
 
     /* Obter horario atual e somar com os segundos requisitados*/
-	mensagem_ptr->data = time(NULL) + atoi(segundos);
+	mensagem.data = time(NULL) + atoi(segundos);
 
-	if(msgget(0x1224, 0x1B6) < 0){
-		printf("Nenhuma fila encontrada \n");
-		exit(1);
+    //Verifica a existencia de filas 
+    if(msgget(0x1224, 0x1B6) < 0){
+        printf("Nenhuma fila encontrada \n");
+        exit(1);
+    }
+    //acha id da fila
+	idfila = msgget(0x1224, 0x1B6);
+	//enviar a fila
+    //if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) >= 0){
+    if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) >= 0){
+		printf("mensagem enviada\n");
 	}
-
-	int idfila = msgget(0x1224, 0x1B6);
-	printf("mensagem enviada\n");
-    msgsnd(idfila, mensagem_ptr, sizeof(mensagem_ptr), 0);
-    
-
-	return mensagem_ptr;
 
 }
 
@@ -94,8 +92,8 @@ int main(int argc, char *argv[])
 {
 	time_t current_time;
 	char* c_time_string;
-	int job_anterior = 1;
-	jobTableType * mensagem_ptr;
+	int job_anterior = -1;
+	const char * seg = argv[1];
 
 	//Verifica o numero de parametros
 	if (argc != 3){
@@ -104,24 +102,25 @@ int main(int argc, char *argv[])
 	}
 
 
-	const char * seg = argv[1];
 	
 	//Verifica se o numero de segundos eh um numero
 	is_num(seg);
 
-	//Procura pela fila
+	//Pega o job anterior atraves de uma mensagem do escalonador
 	job_anterior = pegar_ultimo_job();
 
 
 	//Criar estrutura para colocar arq_exec novo job e data
-	mensagem_ptr = criar_estrutura_mensagem(job_anterior, argv[2], argv[1]);
+	criar_enviar_estrutura(job_anterior, argv[2], argv[1]);
+
+
 
 	 
-    // Conveter para string a data
-    c_time_string = ctime(&mensagem_ptr->data);
-    printf("::job = %d\n", mensagem_ptr->job);
-    printf("::arquivo = %s\n", mensagem_ptr->arq_exec);
-    printf("::%s\n", c_time_string);
+    // // Conveter para string a data
+    // c_time_string = ctime(&mensagem.data);
+    // printf("::job = %d\n", mensagem.job);
+    // printf("::arquivo = %s\n", mensagem.arq_exec);
+    // printf("::%s\n", c_time_string);
 
 	return 0;
 }

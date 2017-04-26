@@ -1,41 +1,31 @@
-#include "executa_postergado.h"
-#include "fila_mensagem"
-
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include "escalonador.h"
 
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
-    msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
-   	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
+    //msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
+   	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
 }
 
 void ler_estrutura_da_fila(int idfila){
-    jobTableType * mensagem_ptr = (jobTableType*) malloc(sizeof(jobTableType));
-
-    //Verifica a existencia de filas 
-    if(msgget(0x1224, 0x1B6) < 0){
-        printf("Nenhuma fila encontrada \n");
-        exit(1);
-    }
-
+    jobTableType mensagem;
+    char* c_time_string;
 
     //Recebe o ultimo job
     //precisa corrigir isso, de resto acho q teoricamente funciona, tah dando overflow
-    if (msgrcv(idfila, &mensagem_ptr, sizeof(mensagem_ptr), 0, 0) < 0){
-    //if (msgrcv(idfila, &estrutura, sizeof(estrutura)-sizeof(long), 0, IPC_NOWAIT) < 0){
-        printf("Nenhum estrutura na fila\n");
+    //if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, 0) < 0){
+    if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
+        printf("Nenhuma mensagem na fila\n");
         exit(1);
     }
 
-    printf("job = %d\n\n", mensagem_ptr->job);
-    printf("arquivo = %s\n", mensagem_ptr->arq_exec);
+    // printf("job = %d\n\n", mensagem.job);
+    //printf("arquivo = %s\n", mensagem.arq_exec);
+    // Conveter para string a data
+    c_time_string = ctime(&mensagem.data);
+    printf("::job = %d\n", mensagem.job);
+    // printf("::arquivo = %s\n", mensagem.arq_exec);
+    printf("::%s\n", c_time_string);
 
 //return mensagem_ptr;
 }

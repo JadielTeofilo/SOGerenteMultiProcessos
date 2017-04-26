@@ -6,7 +6,7 @@ Escalonador importacoes e definicoes
 
 
 #include "executa_postergado.h"
-
+#include "fila_mensagem.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -15,5 +15,4 @@ Escalonador importacoes e definicoes
 #include <sys/msg.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
 
