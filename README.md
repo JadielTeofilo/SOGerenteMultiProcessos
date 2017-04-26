@@ -1,7 +1,7 @@
 # SOGerenteMultiProcessos
-# SOGerenteMultiProcessos
 
-Comandos para rodar
-*make
-*bin/escalonador &
-*bin/in \<segundos\> \<nome_arqexec\>
+##Comandos para rodar
+
+ * make
+ * ./binary/escalonador &
+ * ./binary/in \<segundos\> \<nome_arqexec\>
