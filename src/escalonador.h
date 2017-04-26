@@ -8,6 +8,7 @@ Escalonador importacoes e definicoes
 #include "executa_postergado.h"
 #include "fila_mensagem.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>

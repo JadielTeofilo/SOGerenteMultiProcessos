@@ -13,7 +13,9 @@ Output
 Atribuir um numero de job unico a tupla <arq_exec> 
 Colocar na estrutura de dados compartilhado 
 **/
+#include "fila_mensagem.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -33,11 +35,12 @@ struct jobTable
 
 }typedef jobTableType;
 
-struct jobNum
+struct jobNpidType
 {
 	int job_num;
+	int pid_escalonador;
 
-}typedef jobNumType;
+}typedef escalonadorInfoType;
 
 
 

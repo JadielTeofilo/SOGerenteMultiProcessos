@@ -2,15 +2,27 @@
 
 
 
-void enviar_num_job(jobNumType job_anterior, int idfila){
-    msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
-   	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
+void enviar_num_jobNpid(escalonadorInfoType jobNpid, int idfila){
+    if(msgsnd(idfila, &jobNpid, sizeof(jobNpid), 0) < 0){
+    //if(msgsnd(idfila, &jobNpid, sizeof(jobNpid), 0), 0) >= 0){
+        printf("Erro no envio da mensagem p/ a fila de mensagem\n");
+    }
 }
 
-jobTableType ler_estrutura_da_fila(int idfila){
+jobTableType receber_info_job(){
     jobTableType mensagem;
     jobTableType mensagem_aux;
     char* c_time_string;
+    int idfila = -1;
+
+
+    //Verifica a existencia de filas 
+    while(msgget(0x1224, 0x1B6) < 0){
+        printf("Nenhuma fila encontrada \n");
+        exit(1);
+    }
+
+    idfila = msgget(0x1224,0x1B6);
 
     //Recebe o ultimo job
     //precisa corrigir isso, de resto acho q teoricamente funciona, tah dando overflow
@@ -20,37 +32,37 @@ jobTableType ler_estrutura_da_fila(int idfila){
         exit(1);
     }
 
-    // printf("job = %d\n\n", mensagem.job);
-    //printf("arquivo = %s\n", mensagem.arq_exec);
     // Conveter para string a data
+    // Debug 
     c_time_string = ctime(&mensagem.data);
     printf("::job = %d\n", mensagem.job);
     printf("::arquivo = %s\n", mensagem.arq_exec);
     printf("::%s\n", c_time_string);
     mensagem_aux = mensagem;
+    
     return mensagem_aux;
 }
 
 
 void escalonar(){
 
-	jobNumType job_anterior;
-    job_anterior.job_num = 1;
+	escalonadorInfoType jobNpid;
+    jobNpid.job_num = -1;
+    jobNpid.pid_escalonador = getpid();
 	int idfila = -1;
-    int idfila_estrutura = -1;
 
    	idfila = criar_fila(0x1223);
-   	//envia de inicio para a fila de jobs utilizados o -1
-   	enviar_num_job(job_anterior, idfila);
+   	
+    //envia de inicio para a fila de jobs utilizados o -1
+   	enviar_num_jobNpid(jobNpid, idfila);
 
-    idfila_estrutura = criar_fila(0x1224);
-
-    ler_estrutura_da_fila(idfila_estrutura);
+    pause();
+    //pega da fila de mensagens info sobre novo job
+    receber_info_job();
 
     //printf("job = %d\n", mensagem_ptr->job);
     //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
     excluir_fila(idfila);
-    excluir_fila(idfila_estrutura);
 
 }
 
