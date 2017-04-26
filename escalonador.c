@@ -3,18 +3,19 @@
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
-    //msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
-   	msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
+    msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0);
+   	//msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0);
 }
 
-void ler_estrutura_da_fila(int idfila){
+jobTableType ler_estrutura_da_fila(int idfila){
     jobTableType mensagem;
+    jobTableType mensagem_aux;
     char* c_time_string;
 
     //Recebe o ultimo job
     //precisa corrigir isso, de resto acho q teoricamente funciona, tah dando overflow
-    //if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, 0) < 0){
-    if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
+    if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, 0) < 0){
+    //if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
         printf("Nenhuma mensagem na fila\n");
         exit(1);
     }
@@ -26,8 +27,8 @@ void ler_estrutura_da_fila(int idfila){
     printf("::job = %d\n", mensagem.job);
     printf("::arquivo = %s\n", mensagem.arq_exec);
     printf("::%s\n", c_time_string);
-
-//return mensagem_ptr;
+    mensagem_aux = mensagem;
+    return mensagem_aux;
 }
 
 

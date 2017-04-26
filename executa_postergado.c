@@ -46,8 +46,8 @@ int pegar_ultimo_job(){
 	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
-	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, IPC_NOWAIT) < 0){
-	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
+	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, IPC_NOWAIT) < 0){
+	//if (msgrcv(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) < 0){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
@@ -80,8 +80,8 @@ void criar_enviar_estrutura(int job_anterior, const char* arq_exec, const char* 
     //acha id da fila
 	idfila = msgget(0x1224, 0x1B6);
 	//enviar a fila
-    //if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) >= 0){
-    if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) >= 0){
+    if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) >= 0){
+    //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) >= 0){
 		printf("mensagem enviada\n");
 	}
 
