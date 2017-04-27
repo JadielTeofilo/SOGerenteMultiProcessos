@@ -64,7 +64,7 @@ void escalonar(){
     // Pega um novo job do programa executa postergado 
     info_job = receber_info_job(idfila_estrutura);
 
-    //Coloca o novo job na tabela de forma ordenada
+    //Coloca o novo job na tabela de forma ordenada por data
     //append_job_ordenado(info_job.job, info_job.data, info_job.arq_exec, tabela_jobs);
 
     //funcao que dorme ateh chegar o momento de executar um job
