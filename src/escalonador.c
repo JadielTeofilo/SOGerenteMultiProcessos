@@ -35,6 +35,10 @@ jobInfoType receber_info_job(int idfila){
 }
 
 
+void checar_horario_execucao_job(){}
+
+void executar_job(){}
+
 void escalonar(){
 
 	jobNumType job_anterior;
@@ -55,7 +59,7 @@ void escalonar(){
     enviar_num_job(job_anterior, idfila_num_job);
 
     /** TODO provavelmente vai ter que ser colocado uma 
-        thread essa parte de tratar novo job
+        thread essa parte de esperar por novo job e colocar na tabela
     */
     // Pega um novo job do programa executa postergado 
     info_job = receber_info_job(idfila_estrutura);
@@ -63,6 +67,11 @@ void escalonar(){
     //Coloca o novo job na tabela de forma ordenada
     //append_job_ordenado(info_job.job, info_job.data, info_job.arq_exec, tabela_jobs);
 
+    //funcao que dorme ateh chegar o momento de executar um job
+    checar_horario_execucao_job();
+
+    //funcao chama os gerenciadores de execucao para executar o job
+    executar_job();
 
 
 
