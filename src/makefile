@@ -1,6 +1,7 @@
 all: build1 build2 clean
 
 build1: executa_postergado.o fila_mensagem.o tabela_job.o 
+	@mkdir -p ../binary
 	gcc executa_postergado.o fila_mensagem.o tabela_job.o -o ../binary/in
 
 executa_postergado.o: executa_postergado.c
