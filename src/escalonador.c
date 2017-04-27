@@ -38,22 +38,22 @@ void escalonar(){
 
 	jobNumType job_anterior;
     job_anterior.job_num = 1;
-	int idfila_job_index = -1;
+	int idfila_num_job = -1;
     int idfila_estrutura = -1;
 
     //Cria filas para comunicacao
-   	idfila_job_index = criar_fila(0x1223);
+   	idfila_num_job = criar_fila(0x1223);
     idfila_estrutura = criar_fila(0x1224);
 
     //envia de inicio para a fila de jobs utilizados o -1
-    enviar_num_job(job_anterior, idfila_job_index);
+    enviar_num_job(job_anterior, idfila_num_job);
 
 
     receber_info_job(idfila_estrutura);
 
     //printf("job = %d\n", mensagem_ptr->job);
     //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
-    excluir_fila(idfila_job_index);
+    excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
 
 }
