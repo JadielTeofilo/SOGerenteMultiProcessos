@@ -3,8 +3,8 @@
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
-    if(msgsnd(idfila, &jobNpid, sizeof(jobNpid), 0) < 0){
-    //if(msgsnd(idfila, &jobNpid, sizeof(jobNpid), 0), 0) >= 0){
+    if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0) < 0){
+    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0), 0) >= 0){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
