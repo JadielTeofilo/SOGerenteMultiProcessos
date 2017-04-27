@@ -22,13 +22,15 @@ jobTableType receber_info_job(int idfila){
         exit(1);
     }
 
+    // Debug
     // printf("job = %d\n\n", mensagem.job);
     //printf("arquivo = %s\n", mensagem.arq_exec);
     // Conveter para string a data
-    c_time_string = ctime(&mensagem.data);
-    printf("::job = %d\n", mensagem.job);
-    printf("::arquivo = %s\n", mensagem.arq_exec);
-    printf("::%s\n", c_time_string);
+    // c_time_string = ctime(&mensagem.data);
+    // printf("::job = %d\n", mensagem.job);
+    // printf("::arquivo = %s\n", mensagem.arq_exec);
+    // printf("::%s\n", c_time_string);
+    
     mensagem_aux = mensagem;
     return mensagem_aux;
 }
