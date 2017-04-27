@@ -31,7 +31,7 @@ struct jobTable
 	char arq_exec[6969];
 	time_t data;
 
-}typedef jobTableType;
+}typedef jobInfoType;
 
 struct jobNum
 {

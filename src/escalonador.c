@@ -9,9 +9,9 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
     }
 }
 
-jobTableType receber_info_job(int idfila){
-    jobTableType mensagem;
-    jobTableType mensagem_aux;
+jobInfoType receber_info_job(int idfila){
+    jobInfoType mensagem;
+    jobInfoType mensagem_aux;
     char* c_time_string;
 
     //Recebe o ultimo job
@@ -23,14 +23,13 @@ jobTableType receber_info_job(int idfila){
     }
 
     // Debug
-    // printf("job = %d\n\n", mensagem.job);
-    //printf("arquivo = %s\n", mensagem.arq_exec);
+    
     // Conveter para string a data
     // c_time_string = ctime(&mensagem.data);
     // printf("::job = %d\n", mensagem.job);
     // printf("::arquivo = %s\n", mensagem.arq_exec);
     // printf("::%s\n", c_time_string);
-    
+
     mensagem_aux = mensagem;
     return mensagem_aux;
 }
@@ -39,9 +38,14 @@ jobTableType receber_info_job(int idfila){
 void escalonar(){
 
 	jobNumType job_anterior;
+    jobInfoType info_job;
     job_anterior.job_num = 1;
 	int idfila_num_job = -1;
     int idfila_estrutura = -1;
+
+
+    //Iniciar tabela de jobs
+    tipoTabela * tabela_jobs = init_job_table();
 
     //Cria filas para comunicacao
    	idfila_num_job = criar_fila(0x1223);
@@ -50,8 +54,17 @@ void escalonar(){
     //envia de inicio para a fila de jobs utilizados o -1
     enviar_num_job(job_anterior, idfila_num_job);
 
+    /** TODO provavelmente vai ter que ser colocado uma 
+        thread essa parte de tratar novo job
+    */
+    // Pega um novo job do programa executa postergado 
+    info_job = receber_info_job(idfila_estrutura);
 
-    receber_info_job(idfila_estrutura);
+    //Coloca o novo job na tabela de forma ordenada
+    //append_job_ordenado(info_job.job, info_job.data, info_job.arq_exec, tabela_jobs);
+
+
+
 
     //printf("job = %d\n", mensagem_ptr->job);
     //printf("arquivo = %s\n", mensagem_ptr->arq_exec);

@@ -7,6 +7,7 @@ Escalonador importacoes e definicoes
 
 #include "executa_postergado.h"
 #include "fila_mensagem.h"
+#include "tabela_job.h"
 
 #include <stdio.h>
 #include <errno.h>

@@ -72,7 +72,7 @@ int pegar_ultimo_job(){
 void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* segundos){
 	
 	int idfila;
-	jobTableType mensagem;
+	jobInfoType mensagem;
 	//define o identificador unico do job como o anterior + 1
 	mensagem.job = job_anterior + 1;
 	
