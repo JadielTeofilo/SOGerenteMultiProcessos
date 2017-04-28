@@ -10,13 +10,14 @@ Implementacao em forma de uma lista encadeada
 **/
 
 #include <time.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 //Definicoes de dados
 struct lista_tabela
 {
 	//Dados de cada linha da tabela
-	int job_index;
+	int job_num;
 	time_t data;
 	char arq_exec[6969];
 
@@ -35,10 +36,10 @@ tipoTabela * init_job_table();
 void delete_job_table(tipoTabela* ptr);
 
 //Insere de forma ordenada na tabela de acordo com a data
-void append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
+tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
 
 //Pegar um job da tabela pelo num job
-void get_job(int job_num, tipoTabela* ptr_tabela);
+tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela);
 
 //Retira e retorna o primeiro job da tabela
 void pop_job(tipoTabela * ptr_tabela);

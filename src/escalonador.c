@@ -15,7 +15,6 @@ jobInfoType receber_info_job(int idfila){
     char* c_time_string;
 
     //Recebe o ultimo job
-    //precisa corrigir isso, de resto acho q teoricamente funciona, tah dando overflow
     if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, 0) < 0){
     //if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
         printf("Nenhuma mensagem na fila\n");
@@ -65,7 +64,8 @@ void escalonar(){
     info_job = receber_info_job(idfila_estrutura);
 
     //Coloca o novo job na tabela de forma ordenada por data
-    //append_job_ordenado(info_job.job, info_job.data, info_job.arq_exec, tabela_jobs);
+    tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
+                                        info_job.arq_exec, tabela_jobs);
 
     //funcao que dorme ateh chegar o momento de executar um job
     checar_horario_execucao_job();
