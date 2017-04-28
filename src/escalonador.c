@@ -4,7 +4,7 @@
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0) < 0){
-    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0), 0) >= 0){
+    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0) < 0){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
@@ -83,7 +83,7 @@ void escalonar(){
 
     //printf("job = %d\n", mensagem_ptr->job);
     //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
-    tabela_jobs = delete_job_table(tabela_jobs);
+    free_job_table(tabela_jobs);
     excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
 

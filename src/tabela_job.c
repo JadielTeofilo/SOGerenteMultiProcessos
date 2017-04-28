@@ -19,14 +19,13 @@ tipoTabela * init_job_table(){
 }
 
 //Libera todo o espaco utilizado pela tabela
-tipoTabela * free_job_table(tipoTabela* ptr_tabela){
+void free_job_table(tipoTabela* ptr_tabela){
 	tipoTabela * ptr_prox = ptr_tabela;
 	while(ptr_tabela!=NULL){
 		ptr_prox = ptr_tabela->prox;
 		free(ptr_tabela);
 		ptr_tabela = ptr_prox;
 	}
-	return ptr_tabela;
 }
 
 int eh_vazia(tipoTabela * ptr){
@@ -90,7 +89,7 @@ tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela){
 		}
 	}
 	printf("Job nao encontrado.\n");
-	return -1;
+	return NULL;
 }
 
 //Retira e retorna o primeiro job da tabela
