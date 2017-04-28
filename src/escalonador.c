@@ -77,6 +77,7 @@ void escalonar(){
 
     //printf("job = %d\n", mensagem_ptr->job);
     //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
+    tabela_jobs = delete_job_table(tabela_jobs);
     excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
 
