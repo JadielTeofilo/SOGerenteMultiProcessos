@@ -10,7 +10,7 @@ Implementacao em forma de uma lista encadeada
 **/
 
 #include "tabela_job.h"
-
+#include <stdio.h>
 
 
 //Inicia a tabela/lista encadeada
@@ -19,7 +19,15 @@ tipoTabela * init_job_table(){
 }
 
 //Libera todo o espaco utilizado pela tabela
-void free_job_table(tipoTabela* ptr){}
+tipoTabela * free_job_table(tipoTabela* ptr_tabela){
+	tipoTabela * ptr_prox = ptr_tabela;
+	while(ptr_tabela!=NULL){
+		ptr_prox = ptr_tabela->prox;
+		free(ptr_tabela);
+		ptr_tabela = ptr_prox;
+	}
+	return ptr_tabela;
+}
 
 int eh_vazia(tipoTabela * ptr){
 	return (ptr == NULL);
@@ -86,7 +94,7 @@ tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela){
 }
 
 //Retira e retorna o primeiro job da tabela
-void pop_job(tipoTabela * ptr_tabela){
+tipoTabela * pop_job(tipoTabela * ptr_tabela){
 	tipoTabela * ptr_aux;
 
 	//salva o ponteiro do primeiro nodo e atualiza o primeiro nodo

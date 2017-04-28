@@ -33,7 +33,7 @@ struct lista_tabela
 tipoTabela * init_job_table();
 
 //Libera todo o espaco utilizado pela tabela
-void delete_job_table(tipoTabela* ptr);
+tipoTabela* delete_job_table(tipoTabela* ptr);
 
 //Insere de forma ordenada na tabela de acordo com a data
 tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
@@ -42,6 +42,6 @@ tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoT
 tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela);
 
 //Retira e retorna o primeiro job da tabela
-void pop_job(tipoTabela * ptr_tabela);
+tipoTabela* pop_job(tipoTabela * ptr_tabela);
 
 

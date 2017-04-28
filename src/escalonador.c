@@ -9,16 +9,15 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
     }
 }
 
-jobInfoType receber_info_job(int idfila){
+tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs){
     jobInfoType mensagem;
-    jobInfoType mensagem_aux;
+    jobInfoType info_job;
     char* c_time_string;
 
     //Recebe o ultimo job
-    if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, 0) < 0){
+    if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, IPC_NOWAIT) < 0){
     //if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
-        printf("Nenhuma mensagem na fila\n");
-        exit(1);
+        return tabela_jobs;
     }
 
     // Debug
@@ -29,8 +28,12 @@ jobInfoType receber_info_job(int idfila){
     // printf("::arquivo = %s\n", mensagem.arq_exec);
     // printf("::%s\n", c_time_string);
 
-    mensagem_aux = mensagem;
-    return mensagem_aux;
+    info_job = mensagem;
+
+    tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
+                                        info_job.arq_exec, tabela_jobs);
+
+    return tabela_jobs;
 }
 
 
@@ -41,14 +44,12 @@ void executar_job(){}
 void escalonar(){
 
 	jobNumType job_anterior;
-    jobInfoType info_job;
     job_anterior.job_num = 1;
 	int idfila_num_job = -1;
     int idfila_estrutura = -1;
 
 
-    //Iniciar tabela de jobs
-    tipoTabela * tabela_jobs = init_job_table();
+    
 
     //Cria filas para comunicacao
    	idfila_num_job = criar_fila(0x1223);
@@ -57,15 +58,14 @@ void escalonar(){
     //envia de inicio para a fila de jobs utilizados o -1
     enviar_num_job(job_anterior, idfila_num_job);
 
+
+    //Iniciar tabela de jobs
+    tipoTabela * tabela_jobs = init_job_table();
     /** TODO provavelmente vai ter que ser colocado uma 
         thread essa parte de esperar por novo job e colocar na tabela
     */
     // Pega um novo job do programa executa postergado 
-    info_job = receber_info_job(idfila_estrutura);
-
-    //Coloca o novo job na tabela de forma ordenada por data
-    tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
-                                        info_job.arq_exec, tabela_jobs);
+    tabela_jobs = receber_info_job(idfila_estrutura, tabela_jobs);
 
     //funcao que dorme ateh chegar o momento de executar um job
     checar_horario_execucao_job();
