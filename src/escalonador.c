@@ -37,7 +37,13 @@ tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs){
 }
 
 
-void checar_horario_execucao_job(){}
+int checar_horario_execucao_job(tipoTabela * tabela_jobs){
+    time_t current_time = time(NULL);
+    if(current_time>=tabela_jobs->data){
+        return 1;
+    }
+    return 0;
+}
 
 void executar_job(){}
 
@@ -68,10 +74,11 @@ void escalonar(){
     tabela_jobs = receber_info_job(idfila_estrutura, tabela_jobs);
 
     //funcao que dorme ateh chegar o momento de executar um job
-    checar_horario_execucao_job();
+    if(checar_horario_execucao_job(tabela_jobs)){
 
-    //funcao chama os gerenciadores de execucao para executar o job
-    executar_job();
+        //funcao chama os gerenciadores de execucao para executar o job
+        executar_job();
+    }
 
 
 
