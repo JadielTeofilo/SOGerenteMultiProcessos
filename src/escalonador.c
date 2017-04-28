@@ -9,7 +9,7 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
     }
 }
 
-tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs){
+tipoTabela * receber_tratar_info_job(int idfila, tipoTabela *tabela_jobs){
     jobInfoType mensagem;
     jobInfoType info_job;
     char* c_time_string;
@@ -67,11 +67,10 @@ void escalonar(){
 
     //Iniciar tabela de jobs
     tipoTabela * tabela_jobs = init_job_table();
-    /** TODO provavelmente vai ter que ser colocado uma 
-        thread essa parte de esperar por novo job e colocar na tabela
-    */
-    // Pega um novo job do programa executa postergado 
-    tabela_jobs = receber_info_job(idfila_estrutura, tabela_jobs);
+    
+
+    // Pega um novo job do programa executa postergado e coloca na tabela
+    tabela_jobs = receber_tratar_info_job(idfila_estrutura, tabela_jobs);
 
     //funcao que dorme ateh chegar o momento de executar um job
     if(checar_horario_execucao_job(tabela_jobs)){
