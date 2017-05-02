@@ -1,11 +1,19 @@
 #include "shutdown.h"
 
-
+void aviso_nao_exec(tipoTabela * tabela_jobs){
+	//tem que acessar a lista de tabelas e percorrer ela
+	tabela_jobs = shmat(id_mem_lista, (char *)0, 0);
+	printf("programas que não serao executados:\n");
+	for(;eh_vazia(tabela_jobs); tabela_jobs = tabela_jobs->prox){
+		pop_job(tabela_jobs);
+	}
+}
 
 int main(){
 	//struct que evia para o escalonador desligar caso seja 1
 	shutInfo desligar;
 	int idfila = -1;
+	tipoTabela * tabela_jobs;
 
 	desligar.desliga = 1;
 
@@ -22,6 +30,8 @@ int main(){
 		exit(1);
 	}
 	//mostrar as informacoes
+	//verifica se tem programas nao executados
+	aviso_nao_exec(tabela_jobs);
 	/*
 	caso tenha programas nao executados, deve ser avisado que eles nao serao executados
 	imprimir estatisticas de programas executados

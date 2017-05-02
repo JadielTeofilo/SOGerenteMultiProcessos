@@ -62,6 +62,7 @@ void escalonar(){
 	int idfila_num_job = -1;
     int idfila_estrutura = -1;
     int idfila_shutdown = -1;
+    int id_mem_lista = -1;
 
 
     
@@ -73,14 +74,20 @@ void escalonar(){
 
         //envia de inicio para a fila de jobs utilizados o -1
         enviar_num_job(job_anterior, idfila_num_job);
-        printf("enviou\n");
-
-    while(1){
+        //criar memoria compartilhada 
+        //para que outros programas possam acessar o ponteiro da tabela
+        if((id_mem_lista = shmget(0x1223, sizeof(int), IPC_CREAT|0x1ff))<0){
+            printf("erro na obtencao da memoria\n");
+            exit(1);
+        }
         //Iniciar tabela de jobs
-        tipoTabela * tabela_jobs = init_job_table();
+        tipoTabela * tabela_jobs;
+        tabela_jobs = shmat(id_mem_lista, (char *)0, 0);
+        tabela_jobs = init_job_table();
         /** TODO provavelmente vai ter que ser colocado uma 
             thread essa parte de esperar por novo job e colocar na tabela
         */
+    while(1){
         // Pega um novo job do programa executa postergado 
         tabela_jobs = receber_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
 
