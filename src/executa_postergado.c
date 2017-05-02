@@ -92,7 +92,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	idfila = msgget(0x1224, 0x1B6);
 	//enviar a fila
     if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) < 0){
-    //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) >= 0){
+    //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) < 0){
 		printf("Problema ao enviar as info do novo job\n");
 	}
 
