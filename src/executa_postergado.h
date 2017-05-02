@@ -39,5 +39,12 @@ struct jobNum
 
 }typedef jobNumType;
 
+struct shutTable
+{
+	/* data */
+	int desliga;
+	
+}typedef shutInfo;
+
 
 

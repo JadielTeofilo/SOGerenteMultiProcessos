@@ -5,3 +5,4 @@
  * make
  * ../binary/escalonador &
  * ../binary/in \<segundos\> \<nome_arqexec\>
+ * ../binary/shutdown

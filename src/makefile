@@ -1,4 +1,4 @@
-all: build1 build2 clean
+all: build1 build2 build3 clean
 
 build1: executa_postergado.o fila_mensagem.o tabela_job.o 
 	@mkdir -p ../binary
@@ -18,6 +18,12 @@ build2: escalonador.o fila_mensagem.o tabela_job.o
 
 escalonador.o: escalonador.c
 	gcc -c escalonador.c escalonador.h
+
+build3: shutdown.o fila_mensagem.o tabela_job.o
+	gcc shutdown.o fila_mensagem.o tabela_job.o -o ../binary/shutdown
+
+shutdown.o: shutdown.c
+	gcc -c shutdown.c shutdown.h
 
 
 clean: 
