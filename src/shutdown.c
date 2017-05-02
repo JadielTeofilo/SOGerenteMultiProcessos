@@ -1,11 +1,15 @@
 #include "shutdown.h"
 
 void aviso_nao_exec(tipoTabela * tabela_jobs){
+	tipoTabela * tabela_aux;
 	//tem que acessar a lista de tabelas e percorrer ela
+	int id_mem_lista = shmget(0x1232, sizeof(tipoTabela), 0x1ff);
 	tabela_jobs = shmat(id_mem_lista, (char *)0, 0);
+	printf("%d %s \n",tabela_jobs->job_num, tabela_jobs->arq_exec );
 	printf("programas que não serao executados:\n");
-	for(;eh_vazia(tabela_jobs); tabela_jobs = tabela_jobs->prox){
-		pop_job(tabela_jobs);
+	for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
+		tabela_aux = pop_job(tabela_jobs);
+		printf("%d\n", tabela_aux->job_num);
 	}
 }
 

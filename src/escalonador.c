@@ -3,22 +3,13 @@
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
-<<<<<<< HEAD
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
     //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0), 0) >= 0){
-=======
-    if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0) < 0){
-    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0) < 0){
->>>>>>> 5d49d452a5a8bb6f6e03b6c9e742c951dc0843fc
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
 
-<<<<<<< HEAD
 tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
-=======
-tipoTabela * receber_tratar_info_job(int idfila, tipoTabela *tabela_jobs){
->>>>>>> 5d49d452a5a8bb6f6e03b6c9e742c951dc0843fc
     jobInfoType mensagem;
     jobInfoType info_job;
     char* c_time_string;
@@ -72,10 +63,6 @@ void escalonar(){
     int idfila_estrutura = -1;
     int idfila_shutdown = -1;
     int id_mem_lista = -1;
-
-
-    
-<<<<<<< HEAD
     
         //Cria filas para comunicacao
        	idfila_num_job = criar_fila(0x1223);
@@ -86,7 +73,7 @@ void escalonar(){
         enviar_num_job(job_anterior, idfila_num_job);
         //criar memoria compartilhada 
         //para que outros programas possam acessar o ponteiro da tabela
-        if((id_mem_lista = shmget(0x1223, sizeof(int), IPC_CREAT|0x1ff))<0){
+        if((id_mem_lista = shmget(0x1232, sizeof(tipoTabela), IPC_CREAT|0x1ff))<0){
             printf("erro na obtencao da memoria\n");
             exit(1);
         }
@@ -113,47 +100,13 @@ void escalonar(){
         if(shutdown.desliga==1){
         //printf("job = %d\n", mensagem_ptr->job);
         //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
-            tabela_jobs = free_job_table(tabela_jobs);
+            free_job_table(tabela_jobs);
             excluir_fila(idfila_num_job);
             excluir_fila(idfila_estrutura);
             excluir_fila(idfila_shutdown);
             break;
         }
     }
-
-=======
-
-    //Cria filas para comunicacao
-   	idfila_num_job = criar_fila(0x1223);
-    idfila_estrutura = criar_fila(0x1224);
-
-    //envia de inicio para a fila de jobs utilizados o -1
-    enviar_num_job(job_anterior, idfila_num_job);
-
-
-    //Iniciar tabela de jobs
-    tipoTabela * tabela_jobs = init_job_table();
-    
-
-    // Pega um novo job do programa executa postergado e coloca na tabela
-    tabela_jobs = receber_tratar_info_job(idfila_estrutura, tabela_jobs);
-
-    //funcao que dorme ateh chegar o momento de executar um job
-    if(checar_horario_execucao_job(tabela_jobs)){
-
-        //funcao chama os gerenciadores de execucao para executar o job
-        executar_job();
-    }
-
-
-
-    //printf("job = %d\n", mensagem_ptr->job);
-    //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
-    free_job_table(tabela_jobs);
-    excluir_fila(idfila_num_job);
-    excluir_fila(idfila_estrutura);
-
->>>>>>> 5d49d452a5a8bb6f6e03b6c9e742c951dc0843fc
 }
 
 

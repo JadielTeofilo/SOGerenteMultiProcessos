@@ -33,11 +33,8 @@ struct lista_tabela
 tipoTabela * init_job_table();
 
 //Libera todo o espaco utilizado pela tabela
-<<<<<<< HEAD
-tipoTabela* free_job_table(tipoTabela* ptr);
-=======
+//tipoTabela* free_job_table(tipoTabela* ptr);
 void free_job_table(tipoTabela* ptr);
->>>>>>> 5d49d452a5a8bb6f6e03b6c9e742c951dc0843fc
 
 //Insere de forma ordenada na tabela de acordo com a data
 tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
