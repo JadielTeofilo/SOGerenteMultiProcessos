@@ -74,7 +74,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	int idfila;
 	jobInfoType mensagem;
 	//define o identificador unico do job como o anterior + 1
-	mensagem.job = job_anterior + 1;
+	mensagem.job = job_anterior;
 	printf("job enviado: %d\n", mensagem.job);
 	
 	//aloca e passa o nome do executavel para a estrutura

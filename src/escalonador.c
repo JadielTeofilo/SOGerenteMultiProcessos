@@ -9,7 +9,7 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
     }
 }
 
-tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
+tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
     jobInfoType mensagem;
     jobInfoType info_job;
     char* c_time_string;
@@ -31,9 +31,10 @@ tipoTabela * receber_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_nu
 
     info_job = mensagem;
 
+
     tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
                                         info_job.arq_exec, tabela_jobs);
-    job_anterior.job_num = info_job.job;
+    job_anterior.job_num = info_job.job+1;
     printf("mensagem enviada: %d\n", job_anterior.job_num);
     enviar_num_job(job_anterior, idfila_num_job);
 
@@ -50,7 +51,19 @@ int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     }
     return 0;
 }
+void imprimir_remanescentes(tipoTabela * tabela_jobs){
+    tipoTabela * tabela_aux;
+    //tem que acessar a lista de tabelas e percorrer ela
+    
+    //printf("%d %s \n",(*tabela_jobs).job_num, (*tabela_jobs).arq_exec );
+    printf("\nprogramas que não serao executados:\n");
+    printf("job     arquivo executavel\n");
+    for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
 
+        tabela_aux = pop_job(tabela_jobs);
+        printf("%d          %s\n", tabela_aux->job_num, tabela_aux->arq_exec);
+    }
+}
 void executar_job(){}
 
 void escalonar(){
@@ -64,29 +77,26 @@ void escalonar(){
     int idfila_shutdown = -1;
     int id_mem_lista = -1;
     
-        //Cria filas para comunicacao
-       	idfila_num_job = criar_fila(0x1223);
-        idfila_estrutura = criar_fila(0x1224);
-        idfila_shutdown = criar_fila(0x1225);
+    //Cria filas para comunicacao
+    idfila_num_job = criar_fila(0x1223);
+    idfila_estrutura = criar_fila(0x1224);
+    idfila_shutdown = criar_fila(0x1225);
 
-        //envia de inicio para a fila de jobs utilizados o -1
-        enviar_num_job(job_anterior, idfila_num_job);
-        //criar memoria compartilhada 
-        //para que outros programas possam acessar o ponteiro da tabela
-        if((id_mem_lista = shmget(0x1232, sizeof(tipoTabela), IPC_CREAT|0x1ff))<0){
-            printf("erro na obtencao da memoria\n");
-            exit(1);
-        }
-        //Iniciar tabela de jobs
-        tipoTabela * tabela_jobs;
-        tabela_jobs = shmat(id_mem_lista, (char *)0, 0);
-        tabela_jobs = init_job_table();
-        /** TODO provavelmente vai ter que ser colocado uma 
-            thread essa parte de esperar por novo job e colocar na tabela
-        */
+    //envia de inicio para a fila de jobs utilizados o -1
+    enviar_num_job(job_anterior, idfila_num_job);
+    //criar memoria compartilhada 
+    //para que outros programas possam acessar o ponteiro da tabela
+    if((id_mem_lista = shmget(0x1232, sizeof(long*), IPC_CREAT|0x1ff))<0){
+        printf("erro na obtencao da memoria\n");
+        exit(1);
+    }
+    //Iniciar tabela de jobs
+    tipoTabela * tabela_jobs;
+    tabela_jobs = init_job_table();
+
     while(1){
         // Pega um novo job do programa executa postergado 
-        tabela_jobs = receber_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
+        tabela_jobs = atualiza_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
 
         //funcao que dorme ateh chegar o momento de executar um job
         if(checar_horario_execucao_job(tabela_jobs)){
@@ -97,13 +107,17 @@ void escalonar(){
 
         //Verifica se tem mensagem do processo shutdown mandando desligar
         msgrcv(idfila_shutdown, &shutdown, sizeof(shutdown), 0, IPC_NOWAIT);
+
         if(shutdown.desliga==1){
-        //printf("job = %d\n", mensagem_ptr->job);
-        //printf("arquivo = %s\n", mensagem_ptr->arq_exec);
+            //printf("job = %d\n", tabela_jobs->job_num);
+            //printf("arquivo = %s\n", tabela_jobs->arq_exec);
+            imprimir_remanescentes(tabela_jobs);
             free_job_table(tabela_jobs);
             excluir_fila(idfila_num_job);
             excluir_fila(idfila_estrutura);
             excluir_fila(idfila_shutdown);
+
+            shmctl(id_mem_lista, IPC_RMID, 0);
             break;
         }
     }
