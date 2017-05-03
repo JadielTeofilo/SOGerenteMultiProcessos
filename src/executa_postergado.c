@@ -53,7 +53,6 @@ int pegar_ultimo_job(){
 	}
 
 	idfila = msgget(0x1223, 0x1B6);
-	// printf("%d\n", idfila);
 
 	//Recebe o ultimo job
 	if (msgrcv(idfila, &job_anterior, sizeof(job_anterior), 0, IPC_NOWAIT) < 0){
@@ -73,7 +72,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	
 	int idfila;
 	jobInfoType mensagem;
-	//define o identificador unico do job como o anterior + 1
+	//define o identificador unico do job
 	mensagem.job = job_anterior;
 	printf("job enviado: %d\n", mensagem.job);
 	
@@ -83,14 +82,14 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
     /* Obter horario atual e somar com os segundos requisitados*/
 	mensagem.data = time(NULL) + atoi(segundos);
 
-    //Verifica a existencia de filas 
+    //Soh pode escrever na fila caso ela jah exista, utilizando o seu id
     if(msgget(0x1224, 0x1B6) < 0){
         printf("Nenhuma fila encontrada \n");
         exit(1);
     }
-    //acha id da fila
 	idfila = msgget(0x1224, 0x1B6);
-	//enviar a fila
+
+	//enviar o novo job inserido pelo usuário para tratamento
     if(msgsnd(idfila, &mensagem, sizeof(mensagem), 0) < 0){
     //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) < 0){
 		printf("Problema ao enviar as info do novo job\n");
@@ -105,7 +104,7 @@ int main(int argc, char *argv[])
 	int job_anterior = -1;
 	const char * seg = argv[1];
 
-	//Verifica se o numero de parametros estah certo
+	//Verifica se o numero de parametros esta certo
 	verificar_num_param(argc);
 
 	
@@ -116,7 +115,7 @@ int main(int argc, char *argv[])
 	job_anterior = pegar_ultimo_job();
 
 
-	//Cria e evia estrutura com arq_exec novo job e data
+	//Cria e evia estrutura com arq_exec, novo job e data
 	criar_enviar_novo_job(job_anterior, argv[2], argv[1]);
 
 
