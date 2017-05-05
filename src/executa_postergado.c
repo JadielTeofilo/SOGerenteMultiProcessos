@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 	criar_enviar_novo_job(idfila, job_anterior, argv[2], argv[1]);
 
 	//Avisa o escalonador que foi colocado uma nova mensagem na fila
-	kill(pid_escalonador, SIGCONT);
+	kill(pid_escalonador, SIGALRM);
 
 	//vai ser alterado, eh um timeout para excluir a fila
 	sleep(1);

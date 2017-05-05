@@ -43,6 +43,7 @@ jobTableType receber_info_job(){
     return mensagem_aux;
 }
 
+void dummie(){}
 
 void escalonar(){
 
@@ -50,6 +51,8 @@ void escalonar(){
     jobNpid.job_num = -1;
     jobNpid.pid_escalonador = getpid();
 	int idfila = -1;
+
+    signal(SIGALRM, dummie);
 
    	idfila = criar_fila(0x1223);
    	
