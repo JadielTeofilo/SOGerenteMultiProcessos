@@ -1,10 +1,22 @@
 #include "escalonador.h"
 
+//Definicoes para os ids das filas
+int idfila_num_job;
+int idfila_estrutura;
+int idfila_shutdown;
+int idfila_escal_gerente0_ida;
+int idfila_escal_gerente0_volta;
 
+//definicao id memoria compartilhada
+int id_shm;
+
+//dados do job
+tipoTabela * tabela_jobs;
+tipoTabela * dados_job;
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
-    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), 0), 0) >= 0){
+    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0), 0) >= 0){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
@@ -48,6 +60,7 @@ int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     return 0;
 }
 
+// imprimir dados dos jobs que nao foram executados
 void imprimir_remanescentes(tipoTabela * tabela_jobs){
     tipoTabela * tabela_aux;
     char* c_time_string;
@@ -67,6 +80,7 @@ void informar_ger_exec_job(tipoTabela*dados_job){
 
 }
 
+
 int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
     switch (lado){
         case 0: 
@@ -84,18 +98,38 @@ int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
 
 }
 
-void calcular_idfila_receber(int lado, int meu_id, int *id_torus){
+//Retorna o id da fila para receber msg do 'lado' lado
+int calcular_idfila_receber(int lado, int meu_id, int *id_torus){
+    //calcular a propria posicao 
     int col = meu_id%4;
     int lin = meu_id/4;
+    //calcula a posicao do visinho
     switch(lado){
         case 0:
             lin = (lin-1)%4;
+            break;
         case 1:
             col = (col+1)%4;
+            break;
         case 2:
             lin = (lin+1)%4;
+            break;
         case 3:
             col = (col-1)%4;
+            break;
+    }
+    //calcula a id do vizinho
+    int id = col * 4 + lin;
+    //chama funcao para pegar o id da fila de retorno
+    switch(lado){
+        case 0:
+            return calcular_idfila_envio( 2, id, id_torus);
+        case 1:
+            return calcular_idfila_envio( 3, id, id_torus);
+        case 2:
+            return calcular_idfila_envio( 0, id, id_torus);
+        case 3:
+            return calcular_idfila_envio( 1, id, id_torus);
     }
 }
 
@@ -110,10 +144,14 @@ void gerenciar_execucao(int meu_id, int * id_torus){
         //pegar id para comunicacao com escalonador no gerenciador 0
         if((id_ida_escal = msgget(0x1226, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador\n");
+            int status;
+            while(wait(&status) != -1);
             exit(1);
         }
         if((id_volta_escal = msgget(0x1227, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador \n");
+            int status;
+            while(wait(&status) != -1);
             exit(1);
 
         }
@@ -148,11 +186,14 @@ void montar_torus(){
     //Criar as filas para comunicacao entre os gerentes
     criar_filas_torus(id_torus);
 
+
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
         meu_id = i;
         if((pid = fork())<0){
             printf("erro no fork\n");
+            int status;
+            while(wait(&status) != -1);
             exit(1);
         }
         //codigo do filho
@@ -163,33 +204,59 @@ void montar_torus(){
     }
 }
 
+void shutdown(){
+    //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
+    //imprime as informações dos jobs que não foram executados
+    imprimir_remanescentes(tabela_jobs);
+
+    //libera todas as estruturas de dados utilizados
+    free_job_table(tabela_jobs);
+    excluir_fila(idfila_num_job);
+    excluir_fila(idfila_estrutura);
+    excluir_fila(idfila_shutdown);
+
+    //espera o fechamento dos filhotes e fecha
+//    int status;
+//    while(wait(&status) != -1);
+
+    shmctl(id_shm, IPC_RMID, 0);
+
+    //TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //fechar_filas_torus();
+
+    exit(1);
+
+}
+
 void escalonar(){
+    signal(SIGTERM, shutdown);
 
-    shutInfo shutdown;
-    shutdown.desliga = 0;
 
-	jobNumType job_anterior;
+    jobNumType job_anterior;
     job_anterior.job_num = 1;
-	int idfila_num_job = -1;
-    int idfila_estrutura = -1;
-    int idfila_shutdown = -1;
-    int idfila_escal_gerente0_ida = -1;
-    int idfila_escal_gerente0_volta = -1;
+    idfila_num_job = -1;
+    idfila_estrutura = -1;
+    idfila_shutdown = -1;
+    idfila_escal_gerente0_ida = -1;
+    idfila_escal_gerente0_volta = -1;
     
     //Cria filas para comunicacao
-
     idfila_num_job = criar_fila(0x1223);
     idfila_estrutura = criar_fila(0x1224);
     idfila_shutdown = criar_fila(0x1225);
     idfila_escal_gerente0_ida = criar_fila(0x1226);
     idfila_escal_gerente0_volta = criar_fila(0x1227);
 
+    //Criar espaco em memoria com o pid do escalonador p/ shutdown
+    id_shm = shmget(0x1323,sizeof(int), IPC_CREAT| 0x1B6);
+    int *shm_pid = shmat(id_shm, 0, 0x1B6);
+    *shm_pid = getpid();
+
+
     //envia o proximo job para a fila de mensagens
     enviar_num_job(job_anterior, idfila_num_job);
 
     //Iniciar tabela de jobs
-    tipoTabela * tabela_jobs;
-    tipoTabela * dados_job;
     tabela_jobs = init_job_table();
 
     //cria os gerentes de execução segundo a topologia torus
@@ -210,26 +277,16 @@ void escalonar(){
         //Verifica se tem mensagem do processo shutdown mandando desligar
         msgrcv(idfila_shutdown, &shutdown, sizeof(shutdown), 0, IPC_NOWAIT);
 
-        if(shutdown.desliga==1){
-        //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
-            //imprime as informações dos jobs que não foram executados
-            imprimir_remanescentes(tabela_jobs);
-
-            //libera todas as estruturas de dados utilizados
-            free_job_table(tabela_jobs);
-            excluir_fila(idfila_num_job);
-            excluir_fila(idfila_estrutura);
-            excluir_fila(idfila_shutdown);
-            break;
-        }
     }
 }
 
 
 
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
+    // strncpy(argv[0], "Penis_longo", strlen(argv[0]));
+    argv[0][0] = 65;
 	escalonar();
 
 	return 0;
