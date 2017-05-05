@@ -14,6 +14,12 @@ int id_shm;
 tipoTabela * tabela_jobs;
 tipoTabela * dados_job;
 
+//id dos processos gerentes de execucao
+int pid_filho[16];
+
+//id das filas de comunicacao do torus
+int id_torus[64];
+
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
     //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0), 0) >= 0){
@@ -180,7 +186,6 @@ void criar_filas_torus(int * id_torus){
 void montar_torus(){
     int pid, i;
     int status;
-    int id_torus[64];
     int meu_id = 0;
 
     //Criar as filas para comunicacao entre os gerentes
@@ -201,6 +206,14 @@ void montar_torus(){
             gerenciar_execucao(meu_id, id_torus);
             break;
         }
+        pid_filho[i]=pid;
+    }
+}
+
+void fechar_filas_torus(){
+    int i;
+    for(i=0; i<64; i++){
+        excluir_fila(id_torus[i]);
     }
 }
 
@@ -214,15 +227,21 @@ void shutdown(){
     excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
     excluir_fila(idfila_shutdown);
-
+    excluir_fila(idfila_escal_gerente0_ida);
+    excluir_fila(idfila_escal_gerente0_volta);
+    
     //espera o fechamento dos filhotes e fecha
-//    int status;
-//    while(wait(&status) != -1);
+    int status;
+    int i;
+    for (i = 0; i < 16; i++)
+       kill(pid_filho[i], SIGKILL);
+
+    while(wait(&status) != -1);
 
     shmctl(id_shm, IPC_RMID, 0);
 
     //TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //fechar_filas_torus();
+    fechar_filas_torus();
 
     exit(1);
 
