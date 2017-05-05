@@ -64,21 +64,33 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 
 void executar_job(){}
 
+void gerenciar_execucao(int meu_id, int * id_torus){
+    printf("sou o processo filho\n");
+    if(execl("gerente_execucao", "gerente_execucao",..., (char *) 0)<0){
+        printf("erro no execl\n");
+    }
+}
+
 void montar_torus(){
     int pid;
     int status;
+    int id_torus[64];
+    int meu_id = 0;
+
+    //Criar as filas para comunicacao entre os gerentes
+    criar_filas_torus(id_torus);
+
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
+        meu_id = i;
         if((pid = fork())<0){
             printf("erro no fork\n");
             exit(1);
         }
         //codigo do filho
         if(pid == 0){
-            printf("sou o processo filho\n");
-            if(execl("gerente_execucao", "gerente_execucao",..., (char *) 0)<0){
-                printf("erro no execl\n");
-            }
+            gerenciar_execucao(meu_id, id_torus);
+            break;
         }
     }
 }
