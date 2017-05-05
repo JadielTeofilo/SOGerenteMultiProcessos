@@ -61,18 +61,86 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
     }
 }
+//realiza broadcast com informcoes do novo job para os gerenciadores
+void informar_ger_exec_job(tipoTabela*dados_job){
+    InfoMsgTorus * mensagem;
 
-void executar_job(){}
+}
 
+int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
+    switch (lado){
+        case 0: 
+            return(id_torus[meu_id*4]);
+        //caso de fila para a direita  
+        case 1:
+            return(id_torus[(meu_id*4)+1]);
+        //caso de fila para baixo
+        case 2:
+            return(id_torus[(meu_id*4)+2]);
+        //caso de fila para a esquerda
+        case 3:
+            return(id_torus[(meu_id*4)+3]);
+    }
+
+}
+
+void calcular_idfila_receber(int lado, int meu_id, int *id_torus){
+    int col = meu_id%4;
+    int lin = meu_id/4;
+    switch(lado){
+        case 0:
+            lin = (lin-1)%4;
+        case 1:
+            col = (col+1)%4;
+        case 2:
+            lin = (lin+1)%4;
+        case 3:
+            col = (col-1)%4;
+    }
+}
+
+//codigo do filho/gerenciador de execucao
 void gerenciar_execucao(int meu_id, int * id_torus){
-    printf("sou o processo filho\n");
-    if(execl("gerente_execucao", "gerente_execucao",..., (char *) 0)<0){
-        printf("erro no execl\n");
+    InfoMsgTorus * mensagem;
+    //no gerenciador 0    
+    if(meu_id==0){
+        int id_ida_escal=-1;
+        int id_volta_escal=-1;
+
+        //pegar id para comunicacao com escalonador no gerenciador 0
+        if((id_ida_escal = msgget(0x1226, 0x1B6)) < 0){
+            printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador\n");
+            exit(1);
+        }
+        if((id_volta_escal = msgget(0x1227, 0x1B6)) < 0){
+            printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador \n");
+            exit(1);
+
+        }
+
+        msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
+    }
+    else{
+        while(1){
+
+
+        }
+    }
+}
+
+void criar_filas_torus(int * id_torus){
+    int key = 0x1228;
+    int i;
+    int idfila;
+    for(i=0; i<64; i++){
+        idfila = criar_fila(key);
+        id_torus[i]=idfila;
+        key++;
     }
 }
 
 void montar_torus(){
-    int pid;
+    int pid, i;
     int status;
     int id_torus[64];
     int meu_id = 0;
@@ -105,17 +173,23 @@ void escalonar(){
 	int idfila_num_job = -1;
     int idfila_estrutura = -1;
     int idfila_shutdown = -1;
+    int idfila_escal_gerente0_ida = -1;
+    int idfila_escal_gerente0_volta = -1;
     
     //Cria filas para comunicacao
+
     idfila_num_job = criar_fila(0x1223);
     idfila_estrutura = criar_fila(0x1224);
     idfila_shutdown = criar_fila(0x1225);
+    idfila_escal_gerente0_ida = criar_fila(0x1226);
+    idfila_escal_gerente0_volta = criar_fila(0x1227);
 
     //envia o proximo job para a fila de mensagens
     enviar_num_job(job_anterior, idfila_num_job);
 
     //Iniciar tabela de jobs
     tipoTabela * tabela_jobs;
+    tipoTabela * dados_job;
     tabela_jobs = init_job_table();
 
     //cria os gerentes de execução segundo a topologia torus
@@ -129,7 +203,8 @@ void escalonar(){
         if(checar_horario_execucao_job(tabela_jobs)){
 
             //funcao chama os gerenciadores de execucao para executar o job
-            executar_job();
+            dados_job = pop_job(tabela_jobs);
+            informar_ger_exec_job(dados_job);
         }
 
         //Verifica se tem mensagem do processo shutdown mandando desligar

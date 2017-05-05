@@ -10,12 +10,6 @@ int main(){
 
 	desligar.desliga = 1;
 
-	int id_mem_lista;
-	if(id_mem_lista = shmget(0x1232, sizeof(long*), 0x1ff)<0){
-		printf("erro na obtencao da memoria\n");
-		exit(1);
-	}
-
 	//manda o escalonador desligar
 	//Verifica a existencia de filas 
 	if(msgget(0x1225, 0x1B6) < 0){

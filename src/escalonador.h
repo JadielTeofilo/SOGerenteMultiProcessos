@@ -23,3 +23,13 @@ Escalonador importacoes e definicoes
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+struct mensagem_torus_ida
+{
+	int id_mensagem;
+	int job;
+	char arq_exec[6969];
+	time_t data;
+
+
+}typedef InfoMsgTorus;
+
