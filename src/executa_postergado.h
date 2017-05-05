@@ -30,6 +30,7 @@ Colocar na estrutura de dados compartilhado
 
 struct jobTable
 {
+	long type;
 	int job;
 	char arq_exec[6969];
 	time_t data;
@@ -38,16 +39,10 @@ struct jobTable
 
 struct jobNum
 {
+	long type;
 	int job_num;
 
 }typedef jobNumType;
-
-struct shutTable
-{
-	/* data */
-	int desliga;
-	
-}typedef shutInfo;
 
 
 

@@ -62,10 +62,8 @@ int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     //verifica se o horario atual eh maior que o horario que deveria ser executado
     //ou seja, se já passou do horario de execução
     if(current_time>=tabela_jobs->data){
-        printf("lala\n");
         return 1;
     }
-    printf("111\n");
     return 0;
 }
 
@@ -87,7 +85,7 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 void informar_ger_exec_job(tipoTabela * dados_job){
     InfoMsgTorus mensagem;
 
-
+    mensagem.type = 2;
     mensagem.id_mensagem = 1;
     mensagem.job = dados_job->job_num;
     strcpy(mensagem.arq_exec, dados_job->arq_exec);
@@ -96,8 +94,6 @@ void informar_ger_exec_job(tipoTabela * dados_job){
     if(msgsnd(idfila_escal_gerente0_ida, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
     //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
         printf("erro na hora de enviar dados para o \n");
-        getchar();
-        getchar();
         kill(getpid(), SIGTERM);
     }
 
@@ -157,9 +153,24 @@ int calcular_idfila_receber(int lado, int meu_id, int *id_torus){
     }
 }
 
+void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus){
+    int i;
+    for(i=0; i<4; i++){
+        int idfila = calcular_idfila_envio(i, meu_id, id_torus);
+
+        if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
+        //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
+            printf("erro na hora de enviar dados para o \n");
+            kill(getpid(), SIGTERM);
+        }
+    }
+}
+
+void recebe_mensagem(){}
 //codigo do filho/gerenciador de execucao
 void gerenciar_execucao(int meu_id, int * id_torus){
     InfoMsgTorus mensagem;
+    int status;
     //no gerenciador 0    
     if(meu_id==0){
         int id_ida_escal=-1;
@@ -175,11 +186,34 @@ void gerenciar_execucao(int meu_id, int * id_torus){
             kill(getpid(), SIGTERM);
 
         }
-
+        //recebe primeira msg do escalonador
         msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
+
+        // Envia mensagem para todos vizinhos 
+        envia_msgs_vizinho(mensagem, meu_id, id_torus);
+        
+        if((pid = fork())<0){
+            printf("erro na criacao de fork\n");
+            kill(getpid(), SIGTERM);
+        }
+        if(pid == 0){
+            execl(mensagem.arq_exec, mensagem.arq_exec, NULL);
+        }
+
+        wait(&status);
+
+
+        mensagem.type = 2;
+        if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
+        //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
+            printf("erro na hora de enviar dados para o \n");
+            kill(getpid(), SIGTERM);
+        }
     }
     else{
         while(1){
+
+            recebe_mensagem();
 
 
         }
@@ -298,7 +332,6 @@ void escalonar(){
 
         //funcao que dorme ate chegar o momento de executar um job
         if(checar_horario_execucao_job(tabela_jobs)){
-            printf("lulululu\n");
             //funcao chama os gerenciadores de execucao para executar o job
 
 

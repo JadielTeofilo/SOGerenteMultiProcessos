@@ -28,6 +28,7 @@ Escalonador importacoes e definicoes
 
 struct mensagem_torus_ida
 {
+	long type;
 	int id_mensagem;
 	int job;
 	char arq_exec[6969];
