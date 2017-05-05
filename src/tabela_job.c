@@ -99,8 +99,9 @@ tipoTabela * pop_job(tipoTabela * ptr_tabela){
 	//salva o ponteiro do primeiro nodo e atualiza o primeiro nodo
 	ptr_aux = ptr_tabela;
 	ptr_tabela = ptr_tabela->prox;
+	free(ptr_aux);
 
-	return ptr_aux;
+	return ptr_tabela;
 }
 
 

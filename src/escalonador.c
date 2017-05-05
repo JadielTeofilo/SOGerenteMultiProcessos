@@ -22,7 +22,7 @@ int id_torus[64];
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
-    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0), 0) >= 0){
+    //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) >= 0){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
@@ -56,13 +56,16 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
 int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     time_t current_time = time(NULL);
     //se a tabela for vazia, não tem programa para executar
-    if(tabela_jobs==NULL)
+    if(tabela_jobs==NULL){
         return 0;
+    }
     //verifica se o horario atual eh maior que o horario que deveria ser executado
     //ou seja, se já passou do horario de execução
     if(current_time>=tabela_jobs->data){
+        printf("lala\n");
         return 1;
     }
+    printf("111\n");
     return 0;
 }
 
@@ -76,17 +79,32 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
     printf("job     arquivo executavel      data\n");
     for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
         c_time_string = ctime(&tabela_jobs->data);
-        tabela_aux = pop_job(tabela_jobs);
+        tabela_aux = tabela_jobs;
         printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
     }
 }
 //realiza broadcast com informcoes do novo job para os gerenciadores
-void informar_ger_exec_job(tipoTabela*dados_job){
-    InfoMsgTorus * mensagem;
+void informar_ger_exec_job(tipoTabela * dados_job){
+    InfoMsgTorus mensagem;
+
+
+    mensagem.id_mensagem = 1;
+    mensagem.job = dados_job->job_num;
+    strcpy(mensagem.arq_exec, dados_job->arq_exec);
+    mensagem.data = dados_job->data;
+
+    if(msgsnd(idfila_escal_gerente0_ida, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
+    //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
+        printf("erro na hora de enviar dados para o \n");
+        getchar();
+        getchar();
+        kill(getpid(), SIGTERM);
+    }
+
 
 }
 
-
+//calcula id da fila de envio para cada processo escalonador
 int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
     switch (lado){
         case 0: 
@@ -141,7 +159,7 @@ int calcular_idfila_receber(int lado, int meu_id, int *id_torus){
 
 //codigo do filho/gerenciador de execucao
 void gerenciar_execucao(int meu_id, int * id_torus){
-    InfoMsgTorus * mensagem;
+    InfoMsgTorus mensagem;
     //no gerenciador 0    
     if(meu_id==0){
         int id_ida_escal=-1;
@@ -150,15 +168,11 @@ void gerenciar_execucao(int meu_id, int * id_torus){
         //pegar id para comunicacao com escalonador no gerenciador 0
         if((id_ida_escal = msgget(0x1226, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador\n");
-            int status;
-            while(wait(&status) != -1);
-            exit(1);
+            kill(getpid(), SIGTERM);
         }
         if((id_volta_escal = msgget(0x1227, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador \n");
-            int status;
-            while(wait(&status) != -1);
-            exit(1);
+            kill(getpid(), SIGTERM);
 
         }
 
@@ -185,7 +199,6 @@ void criar_filas_torus(int * id_torus){
 
 void montar_torus(){
     int pid, i;
-    int status;
     int meu_id = 0;
 
     //Criar as filas para comunicacao entre os gerentes
@@ -197,9 +210,7 @@ void montar_torus(){
         meu_id = i;
         if((pid = fork())<0){
             printf("erro no fork\n");
-            int status;
-            while(wait(&status) != -1);
-            exit(1);
+            kill(getpid(), SIGTERM);
         }
         //codigo do filho
         if(pid == 0){
@@ -229,7 +240,7 @@ void shutdown(){
     excluir_fila(idfila_shutdown);
     excluir_fila(idfila_escal_gerente0_ida);
     excluir_fila(idfila_escal_gerente0_volta);
-    
+
     //espera o fechamento dos filhotes e fecha
     int status;
     int i;
@@ -240,7 +251,7 @@ void shutdown(){
 
     shmctl(id_shm, IPC_RMID, 0);
 
-    //TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     fechar_filas_torus();
 
     exit(1);
@@ -287,10 +298,12 @@ void escalonar(){
 
         //funcao que dorme ate chegar o momento de executar um job
         if(checar_horario_execucao_job(tabela_jobs)){
-
+            printf("lulululu\n");
             //funcao chama os gerenciadores de execucao para executar o job
-            dados_job = pop_job(tabela_jobs);
-            informar_ger_exec_job(dados_job);
+
+
+            informar_ger_exec_job(tabela_jobs);
+            tabela_jobs = pop_job(tabela_jobs);
         }
 
         //Verifica se tem mensagem do processo shutdown mandando desligar
@@ -304,8 +317,7 @@ void escalonar(){
 
 int main(int argc, char *argv[])
 {
-    // strncpy(argv[0], "Penis_longo", strlen(argv[0]));
-    argv[0][0] = 65;
+
 	escalonar();
 
 	return 0;
