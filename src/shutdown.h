@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <sys/signal.h>
 
 
 #include <sys/types.h>

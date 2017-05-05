@@ -20,8 +20,11 @@ Escalonador importacoes e definicoes
 #include <time.h>
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
+#include <signal.h>
 
 struct mensagem_torus_ida
 {
