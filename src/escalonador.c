@@ -46,7 +46,7 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
     info_job = mensagem;
 
 
-    tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
+    tabela_jobs = append_job_ordenado(info_job.job, info_job.data,
                                         info_job.arq_exec, tabela_jobs);
 
     //envia o ultimo job atualizado
@@ -107,21 +107,18 @@ void informar_ger_exec_job(tipoTabela * dados_job){
 
 }
 
-int v_sem(int sem)
-{
-     operacao[0].sem_num = 0;
-     operacao[0].sem_op = 0;
-     operacao[0].sem_flg = 0;
-     operacao[1].sem_num = 0;
-     operacao[1].sem_op = 1;
-     operacao[1].sem_flg = 0;
-     if ( semop(sem, operacao, 2) < 0)
-       printf("erro no p=%d\n", errno);
-}
-int p_sem(int sem)
+int p_sem(int sem) // Down - Bloqueia se igual zero, senao subtrai o semaforo
 {
      operacao[0].sem_num = 0;
      operacao[0].sem_op = -1;
+     operacao[0].sem_flg = 0;
+     if ( semop(sem, operacao, 1) < 0)
+       printf("erro no p=%d\n", errno);
+}
+int v_sem(int sem) // Up - Aumentar o semaforo
+{
+     operacao[0].sem_num = 0;
+     operacao[0].sem_op = 1;
      operacao[0].sem_flg = 0;
      if ( semop(sem, operacao, 1) < 0)
        printf("erro no p=%d\n", errno);
@@ -130,9 +127,9 @@ int p_sem(int sem)
 //calcula id da fila de envio para cada processo escalonador
 int calcular_vizinho_envio(int lado, int meu_id){
     switch (lado){
-        case 0: 
+        case 0:
             return(meu_id*4);
-        //caso de fila para a direita  
+        //caso de fila para a direita
         case 1:
             return((meu_id*4)+1);
         //caso de fila para baixo
@@ -147,7 +144,7 @@ int calcular_vizinho_envio(int lado, int meu_id){
 
 //Retorna o id da fila para receber msg do 'lado' lado
 int calcular_idfila_receber(int lado, int meu_id){
-    //calcular a propria posicao 
+    //calcular a propria posicao
     int col = meu_id%4;
     int lin = meu_id/4;
     //calcula a posicao do visinho
@@ -215,7 +212,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int status;
     int pid;
-    //no gerenciador 0    
+    //no gerenciador 0
     if(meu_id==0){
         int id_ida_escal=-1;
         int id_volta_escal=-1;
@@ -233,11 +230,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         //recebe primeira msg do escalonador
         msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
         printf("recebeu\n");
-        // Envia mensagem para todos vizinhos 
+        // Envia mensagem para todos vizinhos
         envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
         printf("oi\n");
 
-        
+
         if((pid = fork())<0){
             printf("erro na criacao de fork\n");
             kill(getpid(), SIGTERM);
@@ -278,7 +275,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     }
 }
 
-void criar_filas_sem_torus(int * id_torus_fila, int *id_torus_fila_sem){
+void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int key = 0x1228;
     int i;
     int idfila;
@@ -301,9 +298,9 @@ void montar_torus(){
     int *psem;
 
     //Criar as filas para comunicacao entre os gerentes
-    criar_filas_sem_torus(id_torus_fila, id_torus_sem);
+    criar_filasNsem_torus(id_torus_fila, id_torus_sem);
 
- 
+
     /* cria semaforo*/
 
 
@@ -371,7 +368,7 @@ void escalonar(){
     idfila_shutdown = -1;
     idfila_escal_gerente0_ida = -1;
     idfila_escal_gerente0_volta = -1;
-    
+
     //Cria filas para comunicacao
     idfila_num_job = criar_fila(0x1223);
     idfila_estrutura = criar_fila(0x1224);
@@ -395,7 +392,7 @@ void escalonar(){
     montar_torus();
 
     while(1){
-        //Le um novo job inserido 
+        //Le um novo job inserido
         tabela_jobs = atualiza_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
 
         //funcao que dorme ate chegar o momento de executar um job
