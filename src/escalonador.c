@@ -1,5 +1,35 @@
 #include "escalonador.h"
 
+#define key_fila_1 0x1223
+#define key_fila_2 0x1224
+#define key_fila_3 0x1225
+#define key_fila_4 0x1226
+#define key_fila_5 0x1227
+#define key_fila_6 0x1228   
+#define key_fila_7 0x1229
+#define key_fila_8 0x1230
+#define key_fila_9 0x1231
+
+#define key_mem_compart_1 0x1323
+#define key_mem_compart_2 0x1324
+#define key_mem_compart_3 0x1325
+#define key_mem_compart_4 0x1326
+#define key_mem_compart_5 0x1327
+#define key_mem_compart_6 0x1328
+#define key_mem_compart_7 0x1329
+#define key_mem_compart_8 0x1330
+#define key_mem_compart_9 0x1331
+
+#define key_sem_1 0x1423
+#define key_sem_2 0x1424
+#define key_sem_3 0x1425
+#define key_sem_4 0x1426
+#define key_sem_5 0x1427
+#define key_sem_6 0x1428
+#define key_sem_7 0x1429
+#define key_sem_8 0x1430
+#define key_sem_9 0x1431
+
 //Definicoes para os ids das filas
 int idfila_num_job;
 int idfila_estrutura;
@@ -107,25 +137,6 @@ void informar_ger_exec_job(tipoTabela * dados_job){
 
 }
 
-int v_sem(int sem)
-{
-     operacao[0].sem_num = 0;
-     operacao[0].sem_op = 0;
-     operacao[0].sem_flg = 0;
-     operacao[1].sem_num = 0;
-     operacao[1].sem_op = 1;
-     operacao[1].sem_flg = 0;
-     if ( semop(sem, operacao, 2) < 0)
-       printf("erro no p=%d\n", errno);
-}
-int p_sem(int sem)
-{
-     operacao[0].sem_num = 0;
-     operacao[0].sem_op = -1;
-     operacao[0].sem_flg = 0;
-     if ( semop(sem, operacao, 1) < 0)
-       printf("erro no p=%d\n", errno);
-}
 
 //calcula id da fila de envio para cada processo escalonador
 int calcular_vizinho_envio(int lado, int meu_id){
@@ -278,13 +289,17 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     }
 }
 
-void criar_filas_sem_torus(int * id_torus_fila, int *id_torus_fila_sem){
-    int key = 0x1228;
+void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
+    int key_fila = key_fila_6;
+    int key_sem = key_sem_1;
     int i;
     int idfila;
     for(i=0; i<64; i++){
-        idfila = criar_fila(key);
-        if ((idsem = semget(key, 1, IPC_CREAT|0x1ff)) < 0)
+        //Criar fila
+        idfila = criar_fila(key_fila);
+
+        //Criar semaforo
+        if ((idsem = semget(key_sem, 1, IPC_CREAT|0x1ff)) < 0)
         {
             printf("erro na criacao da fila\n");
             kill(getpid(), SIGTERM);
@@ -301,7 +316,7 @@ void montar_torus(){
     int *psem;
 
     //Criar as filas para comunicacao entre os gerentes
-    criar_filas_sem_torus(id_torus_fila, id_torus_sem);
+    criar_filasNsem_torus(id_torus_fila, id_torus_sem);
 
  
     /* cria semaforo*/
@@ -344,6 +359,7 @@ void shutdown(){
     excluir_fila(idfila_escal_gerente0_ida);
     excluir_fila(idfila_escal_gerente0_volta);
 
+
     //espera o fechamento dos filhotes e fecha
     int status;
     int i;
@@ -374,14 +390,14 @@ void escalonar(){
     idfila_escal_gerente0_volta = -1;
     
     //Cria filas para comunicacao
-    idfila_num_job = criar_fila(0x1223);
-    idfila_estrutura = criar_fila(0x1224);
-    idfila_shutdown = criar_fila(0x1225);
-    idfila_escal_gerente0_ida = criar_fila(0x1226);
-    idfila_escal_gerente0_volta = criar_fila(0x1227);
+    idfila_num_job = criar_fila(key_fila_1);
+    idfila_estrutura = criar_fila(key_fila_2);
+    idfila_shutdown = criar_fila(key_fila_3);
+    idfila_escal_gerente0_ida = criar_fila(key_fila_4);
+    idfila_escal_gerente0_volta = criar_fila(key_fila_5);
 
     //Criar espaco em memoria com o pid do escalonador p/ shutdown
-    id_shm = shmget(0x1323,sizeof(int), IPC_CREAT| 0x1B6);
+    id_shm = shmget(key_mem_compart_1,sizeof(int), IPC_CREAT| 0x1B6);
     int *shm_pid = shmat(id_shm, 0, 0x1B6);
     *shm_pid = getpid();
 
