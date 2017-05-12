@@ -365,6 +365,7 @@ void escalonar(){
 
 
     jobNumType job_anterior;
+    jobNumType job_anterior.type = 1;
     job_anterior.job_num = 1;
     idfila_num_job = -1;
     idfila_estrutura = -1;
