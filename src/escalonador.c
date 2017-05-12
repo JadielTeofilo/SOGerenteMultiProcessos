@@ -18,7 +18,8 @@ tipoTabela * dados_job;
 int pid_filho[16];
 
 //id das filas de comunicacao do torus
-int id_torus[64];
+int id_torus_fila[64];
+int id_torus_sem[64];
 
 //id para operacao com semáforos
 struct sembuf operacao[2];
@@ -51,6 +52,7 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
     //envia o ultimo job atualizado
     printf("mensagem enviada: %d\n", job_anterior.job_num);
     //define o identificador unico do job como o anterior + 1
+    job_anterior.type = 1;
     job_anterior.job_num = info_job.job+1;
     enviar_num_job(job_anterior, idfila_num_job);
 
@@ -89,7 +91,7 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 //realiza broadcast com informcoes do novo job para os gerenciadores
 void informar_ger_exec_job(tipoTabela * dados_job){
     InfoMsgTorus mensagem;
-
+    printf("enviou\n");
     mensagem.type = 2;
     mensagem.id_mensagem = 1;
     mensagem.job = dados_job->job_num;
@@ -105,7 +107,7 @@ void informar_ger_exec_job(tipoTabela * dados_job){
 
 }
 
-int p_sem()
+int v_sem(int sem)
 {
      operacao[0].sem_num = 0;
      operacao[0].sem_op = 0;
@@ -113,38 +115,38 @@ int p_sem()
      operacao[1].sem_num = 0;
      operacao[1].sem_op = 1;
      operacao[1].sem_flg = 0;
-     if ( semop(idsem, operacao, 2) < 0)
+     if ( semop(sem, operacao, 2) < 0)
        printf("erro no p=%d\n", errno);
 }
-int v_sem()
+int p_sem(int sem)
 {
      operacao[0].sem_num = 0;
      operacao[0].sem_op = -1;
      operacao[0].sem_flg = 0;
-     if ( semop(idsem, operacao, 1) < 0)
+     if ( semop(sem, operacao, 1) < 0)
        printf("erro no p=%d\n", errno);
 }
 
 //calcula id da fila de envio para cada processo escalonador
-int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
+int calcular_vizinho_envio(int lado, int meu_id){
     switch (lado){
         case 0: 
-            return(id_torus[meu_id*4]);
+            return(meu_id*4);
         //caso de fila para a direita  
         case 1:
-            return(id_torus[(meu_id*4)+1]);
+            return((meu_id*4)+1);
         //caso de fila para baixo
         case 2:
-            return(id_torus[(meu_id*4)+2]);
+            return((meu_id*4)+2);
         //caso de fila para a esquerda
         case 3:
-            return(id_torus[(meu_id*4)+3]);
+            return((meu_id*4)+3);
     }
 
 }
 
 //Retorna o id da fila para receber msg do 'lado' lado
-int calcular_idfila_receber(int lado, int meu_id, int *id_torus){
+int calcular_idfila_receber(int lado, int meu_id){
     //calcular a propria posicao 
     int col = meu_id%4;
     int lin = meu_id/4;
@@ -168,33 +170,48 @@ int calcular_idfila_receber(int lado, int meu_id, int *id_torus){
     //chama funcao para pegar o id da fila de retorno
     switch(lado){
         case 0:
-            return calcular_idfila_envio( 2, id, id_torus);
+            return calcular_vizinho_envio( 2, id);
         case 1:
-            return calcular_idfila_envio( 3, id, id_torus);
+            return calcular_vizinho_envio( 3, id);
         case 2:
-            return calcular_idfila_envio( 0, id, id_torus);
+            return calcular_vizinho_envio( 0, id);
         case 3:
-            return calcular_idfila_envio( 1, id, id_torus);
+            return calcular_vizinho_envio( 1, id);
     }
 }
 
-void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus){
+void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, int * id_torus_sem){
     int i;
     for(i=0; i<4; i++){
-        int idfila = calcular_idfila_envio(i, meu_id, id_torus);
+        int idfila = id_torus_fila[calcular_vizinho_envio(i, meu_id)];
 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
             kill(getpid(), SIGTERM);
         }
+        printf("ak %d \n", calcular_vizinho_envio(i, meu_id));
+        v_sem(id_torus_sem[calcular_vizinho_envio(i, meu_id)]);
     }
 }
 
 
-void recebe_mensagem(){}
+InfoMsgTorus repassa_mensagem(int * id_torus_fila, int meu_id, int * id_torus_sem){
+    InfoMsgTorus mensagem;
+    int i;
+
+    for(i=0; i<4; i++){
+        printf("lala %d\n", meu_id);
+        p_sem(id_torus_sem[meu_id]);
+        printf("passou\n");
+        int idfila = id_torus_fila[calcular_idfila_receber(i, meu_id)];
+        msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT);
+    }
+
+    envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+}
 //codigo do filho/gerenciador de execucao
-void gerenciar_execucao(int meu_id, int * id_torus){
+void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int status;
     int pid;
@@ -215,16 +232,20 @@ void gerenciar_execucao(int meu_id, int * id_torus){
         }
         //recebe primeira msg do escalonador
         msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
-
+        printf("recebeu\n");
         // Envia mensagem para todos vizinhos 
-        envia_msgs_vizinho(mensagem, meu_id, id_torus);
+        envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+        printf("oi\n");
+
         
         if((pid = fork())<0){
             printf("erro na criacao de fork\n");
             kill(getpid(), SIGTERM);
         }
         if(pid == 0){
-            execl(mensagem.arq_exec, mensagem.arq_exec, NULL);
+            if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
+                printf("erro na execução do arquivo");
+            }
         }
 
         wait(&status);
@@ -240,20 +261,36 @@ void gerenciar_execucao(int meu_id, int * id_torus){
     else{
         while(1){
 
-            recebe_mensagem();
-
+            mensagem = repassa_mensagem(id_torus_fila, meu_id, id_torus_sem);
+            if((pid = fork())<0){
+                printf("erro na criacao de fork\n");
+                kill(getpid(), SIGTERM);
+            }
+            printf("::%s\n",mensagem.arq_exec );
+            if(pid == 0){
+                if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
+                    printf("erro na execução do arquivo");
+                }
+            }
+            wait(&status);
 
         }
     }
 }
 
-void criar_filas_torus(int * id_torus){
+void criar_filas_sem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int key = 0x1228;
     int i;
     int idfila;
     for(i=0; i<64; i++){
         idfila = criar_fila(key);
-        id_torus[i]=idfila;
+        if ((idsem = semget(key, 1, IPC_CREAT|0x1ff)) < 0)
+        {
+            printf("erro na criacao da fila\n");
+            kill(getpid(), SIGTERM);
+        }
+        id_torus_sem[i]=idsem;
+        id_torus_fila[i]=idfila;
         key++;
     }
 }
@@ -264,15 +301,11 @@ void montar_torus(){
     int *psem;
 
     //Criar as filas para comunicacao entre os gerentes
-    criar_filas_torus(id_torus);
+    criar_filas_sem_torus(id_torus_fila, id_torus_sem);
 
  
     /* cria semaforo*/
-    if ((idsem = semget(0x1223, 1, IPC_CREAT|0x1ff)) < 0)
-    {
-        printf("erro na criacao da fila\n");
-        exit(1);
-    }
+
 
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
@@ -283,7 +316,7 @@ void montar_torus(){
         }
         //codigo do filho
         if(pid == 0){
-            gerenciar_execucao(meu_id, id_torus);
+            gerenciar_execucao(meu_id, id_torus_fila, id_torus_sem);
             break;
         }
         pid_filho[i]=pid;
@@ -293,7 +326,8 @@ void montar_torus(){
 void fechar_filas_torus(){
     int i;
     for(i=0; i<64; i++){
-        excluir_fila(id_torus[i]);
+        excluir_fila(id_torus_fila[i]);
+        semctl(id_torus_sem[i], 1, IPC_RMID, 0);
     }
 }
 
@@ -319,7 +353,6 @@ void shutdown(){
     while(wait(&status) != -1);
 
     shmctl(id_shm, IPC_RMID, 0);
-
 
     fechar_filas_torus();
 
