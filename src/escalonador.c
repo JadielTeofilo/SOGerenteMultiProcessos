@@ -20,6 +20,11 @@ int pid_filho[16];
 //id das filas de comunicacao do torus
 int id_torus[64];
 
+//id para operacao com semáforos
+struct sembuf operacao[2];
+int idsem;
+
+
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
     //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) >= 0){
@@ -100,6 +105,26 @@ void informar_ger_exec_job(tipoTabela * dados_job){
 
 }
 
+int p_sem()
+{
+     operacao[0].sem_num = 0;
+     operacao[0].sem_op = 0;
+     operacao[0].sem_flg = 0;
+     operacao[1].sem_num = 0;
+     operacao[1].sem_op = 1;
+     operacao[1].sem_flg = 0;
+     if ( semop(idsem, operacao, 2) < 0)
+       printf("erro no p=%d\n", errno);
+}
+int v_sem()
+{
+     operacao[0].sem_num = 0;
+     operacao[0].sem_op = -1;
+     operacao[0].sem_flg = 0;
+     if ( semop(idsem, operacao, 1) < 0)
+       printf("erro no p=%d\n", errno);
+}
+
 //calcula id da fila de envio para cada processo escalonador
 int calcular_idfila_envio(int lado, int meu_id, int * id_torus){
     switch (lado){
@@ -166,11 +191,13 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus){
     }
 }
 
+
 void recebe_mensagem(){}
 //codigo do filho/gerenciador de execucao
 void gerenciar_execucao(int meu_id, int * id_torus){
     InfoMsgTorus mensagem;
     int status;
+    int pid;
     //no gerenciador 0    
     if(meu_id==0){
         int id_ida_escal=-1;
@@ -203,7 +230,7 @@ void gerenciar_execucao(int meu_id, int * id_torus){
         wait(&status);
 
 
-        mensagem.type = 2;
+        mensagem.type = 3;
         if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
@@ -234,10 +261,18 @@ void criar_filas_torus(int * id_torus){
 void montar_torus(){
     int pid, i;
     int meu_id = 0;
+    int *psem;
 
     //Criar as filas para comunicacao entre os gerentes
     criar_filas_torus(id_torus);
 
+ 
+    /* cria semaforo*/
+    if ((idsem = semget(0x1223, 1, IPC_CREAT|0x1ff)) < 0)
+    {
+        printf("erro na criacao da fila\n");
+        exit(1);
+    }
 
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
