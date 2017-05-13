@@ -269,8 +269,12 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
+<<<<<<< HEAD
             libera_mem();
             //return;
+=======
+            kill(getpid(), SIGTERM);
+>>>>>>> 2177f2de233a0d8a1a760da54b3d859125acb81d
         }
         // printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
@@ -401,9 +405,22 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
 
         //  TODO Avisa o escalonador que acabou quando recebe \
         mensagem de todos os outros dizendo que acabaram
-        int num_finalizados = 1;
+        int num_finalizados = 0;
         while(1){
-
+            p_sem(id_torus_sem_volta[meu_id]);
+            for (int j = 2; j < 4; ++j)
+            {
+                int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
+                //Recebe a msg
+                if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
+                    //incrementa num finalizados
+                    num_finalizados++;
+                    // ele sai caso ache uma msg
+                    break;
+            }
+            if(num_finalizados == 15){
+                break;
+            }
             // mensagem.type = 3;
             // if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
             // //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
