@@ -76,8 +76,8 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
     jobNumType job_anterior;
 
     //Recebe o ultimo job
-    if (msgrcv(idfila, &mensagem, sizeof(mensagem), 0, IPC_NOWAIT) < 0){
-    //if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0, 0) < 0){
+    if (msgrcv(idfila, &mensagem, sizeof(mensagem), 1, IPC_NOWAIT) < 0){
+    //if (msgrcv(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 1, IPC_NOWAIT) < 0){
         return tabela_jobs;
     }
     info_job = mensagem;
@@ -433,7 +433,7 @@ void shutdown(){
     //liberar a memoria compartilhada
     shmctl(id_shm, IPC_RMID, 0);
 
-    
+    printf("Desligando o Programa...\n");
     //Exclui as filas e os semaforos utilizados
     fechar_filasNsems_torus();
 

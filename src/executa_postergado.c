@@ -74,7 +74,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	jobInfoType mensagem;
 
 	//Define o tipo
-	mensagem.type = 0;
+	mensagem.type = 1;
 	//define o identificador unico do job
 	mensagem.job = job_anterior;
 	printf("job enviado: %d\n", mensagem.job);
