@@ -190,6 +190,7 @@ int calcular_idfila_receber(int lado, int meu_id){
     }
 }
 
+//Envia a "mensagem" para os quatro vizinhos
 void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, int * id_torus_sem){
     int i;
     for(i=0; i<4; i++){
@@ -205,8 +206,8 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
     }
 }
 
-// Repassa aos 4 vizinhos disponiveis a mensagem recebida
-InfoMsgTorus repassa_mensagem(int * id_torus_fila, int meu_id, int * id_torus_sem){
+// Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
+InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int i;
 
@@ -249,7 +250,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
         printf("oi\n");
 
-        
+        //Roda o programa solicitado
         if((pid = fork())<0){
             printf("erro na criacao de fork\n");
             kill(getpid(), SIGTERM);
@@ -260,20 +261,26 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             }
         }
 
+        //Aguarda o programa encerrar
         wait(&status);
 
+        //  TODO Avisa o escalonador que acabou quando recebe \
+        mensagem de todos os outros dizendo que acabaram
+        int num_finalizados = 1;
+        while(1){
 
-        mensagem.type = 3;
-        if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
-        //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
-            printf("erro na hora de enviar dados para o \n");
-            kill(getpid(), SIGTERM);
+            // mensagem.type = 3;
+            // if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
+            // //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
+            //     printf("erro na hora de enviar dados para o \n");
+            //     kill(getpid(), SIGTERM);
+            // }
         }
     }
     else{
         while(1){
-            //Repassar um broadcast para um vizinho
-            mensagem = repassa_mensagem(id_torus_fila, meu_id, id_torus_sem);
+            //Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
+            mensagem = trata_broadcast(id_torus_fila, meu_id, id_torus_sem);
             if((pid = fork())<0){
                 printf("erro na criacao de fork\n");
                 kill(getpid(), SIGTERM);
