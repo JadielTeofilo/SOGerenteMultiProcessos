@@ -106,7 +106,11 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
     //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) < 0){
 		printf("Problema ao enviar as info do novo job\n");
 	}
-	
+	// Conveter para string a data
+    char *c_time_string = ctime(&mensagem.data);
+    printf("::job = %d\n", mensagem.job);
+    printf("::arquivo = %s\n", mensagem.arq_exec);
+    printf("::%s\n", c_time_string);
 
 
 }
@@ -138,11 +142,7 @@ int main(int argc, char *argv[])
 
 
 	 
-    // // Conveter para string a data
-    // c_time_string = ctime(&mensagem.data);
-    // printf("::job = %d\n", mensagem.job);
-    // printf("::arquivo = %s\n", mensagem.arq_exec);
-    // printf("::%s\n", c_time_string);
+    
 
 	return 0;
 }

@@ -269,7 +269,7 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
-            printf("erro na hora de enviar dados para o \n");
+            printf("erro na hora de enviar dados para os vizinhos errno: %d\n",errno);
             libera_mem();
             //return;
         }
@@ -295,12 +295,15 @@ void tratar_msg_fim_exec(int meu_id){
     int ainda_n_reenviei = 1;
     int id_envio_sem = calcular_id_vizinho(roteador(meu_id),meu_id);
 
-
     // aguarda receber mensagens de fim de execucao \
     podem ser 15 - meu_id para a primeira fileira ou meu_id/4 - 3 \
     para o resto
-    for(int i=0; i < (!(meu_id % 4))?15 - meu_id: abs((4 - meu_id%4) - 1); i++){
+    int numRep = (!(meu_id % 4))?15 - meu_id: abs((4 - meu_id%4) - 1);
+
+    for(int i=0; i < numRep; ++i){
         // aguarda o sinal de que recebeu uma mensagem
+        p_sem(id_torus_sem_volta[meu_id]);
+        // printf("eu %d, nao estou esperando\n", meu_id);
         //Pega entao as mensagem que recebeu e reenvia
         for (int j = 1; j < 3; ++j)
         {
@@ -454,7 +457,6 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             
             //faz loop para receber e reenviar msg de fim de execucao
             tratar_msg_fim_exec(meu_id);
-            printf("cheguei aqui\n");
         }
     }
 }
@@ -562,7 +564,7 @@ void escalonar(){
     id_shm = shmget(key_mem_compart_1,sizeof(int), IPC_CREAT| 0x1B6);
     int *shm_pid = shmat(id_shm, 0, 0x1B6);
     *shm_pid = getpid();
-
+ char* c_time_string;
 
     //envia o proximo job para a fila de mensagens
     enviar_num_job(job_anterior, idfila_num_job);
@@ -583,7 +585,9 @@ void escalonar(){
 
             inicio = clock();
             informar_ger_exec_zero(tabela_jobs);
+
             tabela_jobs = pop_job(tabela_jobs);
+            
         }
 
         if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, IPC_NOWAIT) > 0){
@@ -593,7 +597,6 @@ void escalonar(){
 
         }
 
-        //Verifica se tem mensagem do processo shutdown mandando desligar
 
 
     }
