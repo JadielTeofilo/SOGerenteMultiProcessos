@@ -181,7 +181,6 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 //realiza passar mensagem com dados para o gerente zero 
 void informar_ger_exec_zero(tipoTabela * dados_job){
     InfoMsgTorus mensagem;
-    printf("enviou\n");
     mensagem.type = 2;
     mensagem.id_mensagem = 1;
     mensagem.job = dados_job->job_num;
@@ -269,12 +268,8 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
-<<<<<<< HEAD
             libera_mem();
             //return;
-=======
-            kill(getpid(), SIGTERM);
->>>>>>> 2177f2de233a0d8a1a760da54b3d859125acb81d
         }
         // printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
@@ -382,51 +377,58 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             libera_mem();
 
         }
-        //recebe primeira msg do escalonador
-        msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
-        // printf("recebeu\n");
-        // Envia mensagem para todos vizinhos 
-        envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
-        // printf("oi\n");
+        while(1){
+            //recebe primeira msg do escalonador
+            msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
+            // printf("recebeu\n");
+            // Envia mensagem para todos vizinhos 
+            envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+            // printf("oi\n");
 
-        //Roda o programa solicitado
-        if((pid = fork())<0){
-            printf("erro na criacao de fork\n");
-            libera_mem();
-        }
-        if(pid == 0){
-            if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
+            //Roda o programa solicitado
+            if((pid = fork())<0){
+                printf("erro na criacao de fork\n");
                 libera_mem();
             }
-        }
+            if(pid == 0){
+                if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
+                    libera_mem();
+                }
+            }
 
-        //Aguarda o programa encerrar
-        wait(&status);
+            //Aguarda o programa encerrar
+            wait(&status);
+            
+            InfoFlgTorus msg_flag;
+            msg_flag.type = 3;
+            msg_flag.flag = 1;
 
-        //  TODO Avisa o escalonador que acabou quando recebe \
-        mensagem de todos os outros dizendo que acabaram
-        int num_finalizados = 0;
-        while(1){
-            p_sem(id_torus_sem_volta[meu_id]);
-            for (int j = 2; j < 4; ++j)
-            {
-                int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
-                //Recebe a msg
-                if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
-                    //incrementa num finalizados
-                    num_finalizados++;
-                    // ele sai caso ache uma msg
+            int num_finalizados = 0;
+            //laco para receber os avisos de termino
+            while(1){
+                p_sem(id_torus_sem_volta[meu_id]);
+                for (int j = 2; j < 4; ++j)
+                {
+                    int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
+                    //Recebe a msg
+                    if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
+                        //incrementa num finalizados
+                        num_finalizados++;
+                        // ele sai caso ache uma msg
+                        break;
+                    }
+                }
+                if(num_finalizados == 15){
                     break;
+                }
+                // mensagem.type = 3;
+                // if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
+                // //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
+                //     printf("erro na hora de enviar dados para o \n");
+                //     kill(getpid(), SIGTERM);
+                // }
             }
-            if(num_finalizados == 15){
-                break;
-            }
-            // mensagem.type = 3;
-            // if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
-            // //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
-            //     printf("erro na hora de enviar dados para o \n");
-            //     kill(getpid(), SIGTERM);
-            // }
+            msgsnd(id_volta_escal, &msg_flag , sizeof(msg_flag), 0);
         }
     }
     else{
@@ -547,6 +549,7 @@ void shutdown(){
 
 void escalonar(){
     signal(SIGTERM, shutdown);
+    InfoFlgTorus msg_flag;
 
 
     jobNumType job_anterior;
@@ -593,8 +596,12 @@ void escalonar(){
             tabela_jobs = pop_job(tabela_jobs);
         }
 
+        if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
+            printf("Todos acabaram a execucao\n");
+        }
+
         //Verifica se tem mensagem do processo shutdown mandando desligar
-        msgrcv(idfila_shutdown, &shutdown, sizeof(shutdown), 0, IPC_NOWAIT);
+
 
     }
 }
