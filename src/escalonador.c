@@ -362,16 +362,20 @@ void shutdown(){
     excluir_fila(idfila_escal_gerente0_volta);
 
 
-    //espera o fechamento dos filhotes e fecha
-    int status;
-    int i;
-    for (i = 0; i < 16; i++)
+
+    // Matar os gerentes
+    for (int i = 0; i < 16; i++)
        kill(pid_filho[i], SIGKILL);
 
+    int status;
+    //aguardar a morte dos gerentes
     while(wait(&status) != -1);
 
+    //liberar a memoria compartilhada
     shmctl(id_shm, IPC_RMID, 0);
 
+    
+    //Exclui as filas e os semaforos utilizados
     fechar_filasNsems_torus();
 
     exit(1);
