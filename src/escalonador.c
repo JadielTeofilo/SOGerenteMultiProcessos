@@ -359,7 +359,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
 
         //  TODO Avisa o escalonador que acabou quando recebe \
         mensagem de todos os outros dizendo que acabaram
-        int num_finalizados = 1;
+        int num_finalizados = 0;
         while(1){
             p_sem(id_torus_sem_volta[meu_id]);
             for (int j = 2; j < 4; ++j)
@@ -367,10 +367,13 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                 int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
                 //Recebe a msg
                 if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
-                    // envia a msg_flag para o proximo nodo
+                    //incrementa num finalizados
                     num_finalizados++;
                     // ele sai caso ache uma msg
                     break;
+            }
+            if(num_finalizados == 15){
+                break;
             }
             // mensagem.type = 3;
             // if(msgsnd(id_volta_escal, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
