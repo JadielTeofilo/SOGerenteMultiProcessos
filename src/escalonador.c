@@ -255,7 +255,7 @@ int roteador(int meu_id){
 void tratar_msg_fim_exec(int meu_id){
     InfoFlgTorus msg_flag;
     int i;
-    int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
+    int id_envio = id_torus_fila[calcular_idfila_envio(roteador(meu_id),meu_id)];
     int ainda_n_reenviei = 1;
     
     // aguarda receber mensagens de fim de execucao \
@@ -394,7 +394,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             msg_flag.type = 3;
             msg_flag.flag = 1;
 
-            int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
+            int id_envio = id_torus_fila[calcular_idfila_envio(roteador(meu_id),meu_id)];
             //Enviar mensagem termino para o proximo nodo
             if(msgsnd(id_envio, &msg_flag, sizeof(msg_flag), IPC_NOWAIT)<0){
                 printf("erro na hora de enviar msg fim exec\n");
