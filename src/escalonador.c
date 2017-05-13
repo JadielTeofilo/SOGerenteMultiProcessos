@@ -51,6 +51,8 @@ Criar uma definicao para lados esquerdo direito cima e baixo
 #define key_sem_volta_8 0x1530
 #define key_sem_volta_9 0x1531
 
+int flag_shutdown = 0;
+
 //Definicoes para os ids das filas
 int idfila_num_job;
 int idfila_estrutura;
@@ -73,6 +75,45 @@ int id_torus_fila[64];
 int id_torus_sem[16];
 int id_torus_sem_volta[16];
 
+
+//Exclui as filas e os semaforos utilizados
+void fechar_filasNsems_torus(){
+    int i;
+    for(i=0; i<64; i++){
+        excluir_fila(id_torus_fila[i]);
+        if(i<16){
+           excluir_semaforo(id_torus_sem[i]);
+           excluir_semaforo(id_torus_sem_volta[i]);
+        }
+    }
+}
+
+void libera_mem(){
+    //libera todas as estruturas de dados utilizados
+    free_job_table(tabela_jobs);
+    excluir_fila(idfila_num_job);
+    excluir_fila(idfila_estrutura);
+    excluir_fila(idfila_shutdown);
+    excluir_fila(idfila_escal_gerente0_ida);
+    excluir_fila(idfila_escal_gerente0_volta);
+
+
+
+    // Matar os gerentes
+    for (int i = 0; i < 16; i++)
+       kill(pid_filho[i], SIGKILL);
+
+    int status;
+    //aguardar a morte dos gerentes
+    while(wait(&status) != -1);
+
+    //liberar a memoria compartilhada
+    shmctl(id_shm, IPC_RMID, 0);
+
+    fechar_filasNsems_torus();
+
+    exit(1);
+}
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
@@ -151,7 +192,7 @@ void informar_ger_exec_zero(tipoTabela * dados_job){
     if(msgsnd(idfila_escal_gerente0_ida, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
     //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
         printf("erro na hora de enviar dados para o \n");
-        kill(getpid(), SIGTERM);
+        libera_mem();
     }
 }
 
@@ -228,8 +269,8 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
-            //kill(getpid(), SIGTERM);
-            return;
+            libera_mem();
+            //return;
         }
         // printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
@@ -275,7 +316,7 @@ void tratar_msg_fim_exec(int meu_id){
                 // envia a msg_flag para o proximo nodo
                 if(msgsnd(id_envio, &msg_flag, sizeof(msg_flag), IPC_NOWAIT)<0){
                     printf("erro na hora de enviar msg fim exec\n");
-                    kill(getpid(), SIGTERM);
+                    libera_mem();
                 }
                 // ele sai caso ache uma msg
                 break;
@@ -330,11 +371,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         //pegar id para comunicacao com escalonador no gerenciador 0
         if((id_ida_escal = msgget(key_fila_4, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador\n");
-            kill(getpid(), SIGTERM);
+            libera_mem();
         }
         if((id_volta_escal = msgget(key_fila_5, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador \n");
-            kill(getpid(), SIGTERM);
+            libera_mem();
 
         }
         //recebe primeira msg do escalonador
@@ -347,11 +388,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         //Roda o programa solicitado
         if((pid = fork())<0){
             printf("erro na criacao de fork\n");
-            kill(getpid(), SIGTERM);
+            libera_mem();
         }
         if(pid == 0){
             if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
-                printf("erro na execução do arquivo");
+                libera_mem();
             }
         }
 
@@ -378,7 +419,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             // printf("::%s\n",mensagem.arq_exec );
             if((pid = fork())<0){
                 printf("erro na criacao de fork\n");
-                kill(getpid(), SIGTERM);
+                libera_mem();
             }
             if(pid == 0){
                 if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
@@ -399,7 +440,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             //Enviar mensagem termino para o proximo nodo
             if(msgsnd(id_envio, &msg_flag, sizeof(msg_flag), IPC_NOWAIT)<0){
                 printf("erro na hora de enviar msg fim exec\n");
-                kill(getpid(), SIGTERM);
+                libera_mem();
             }
             //avisa o destinatario
             v_sem(id_torus_sem_volta[id_envio]);
@@ -463,7 +504,7 @@ void montar_torus(){
         meu_id = i;
         if((pid = fork())<0){
             printf("erro no fork\n");
-            kill(getpid(), SIGTERM);
+            libera_mem();
         }
         //codigo do filho
         if(pid == 0){
@@ -474,49 +515,16 @@ void montar_torus(){
     }
 }
 
-//Exclui as filas e os semaforos utilizados
-void fechar_filasNsems_torus(){
-    int i;
-    for(i=0; i<64; i++){
-        excluir_fila(id_torus_fila[i]);
-        if(i<16){
-           excluir_semaforo(id_torus_sem[i]);
-           excluir_semaforo(id_torus_sem_volta[i]);
-        }
-    }
-}
 
 void shutdown(){
     //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
     //imprime as informações dos jobs que não foram executados
     imprimir_remanescentes(tabela_jobs);
 
-    //libera todas as estruturas de dados utilizados
-    free_job_table(tabela_jobs);
-    excluir_fila(idfila_num_job);
-    excluir_fila(idfila_estrutura);
-    excluir_fila(idfila_shutdown);
-    excluir_fila(idfila_escal_gerente0_ida);
-    excluir_fila(idfila_escal_gerente0_volta);
-
-
-
-    // Matar os gerentes
-    for (int i = 0; i < 16; i++)
-       kill(pid_filho[i], SIGKILL);
-
-    int status;
-    //aguardar a morte dos gerentes
-    while(wait(&status) != -1);
-
-    //liberar a memoria compartilhada
-    shmctl(id_shm, IPC_RMID, 0);
-
     printf("Desligando o Programa...\n");
     //Exclui as filas e os semaforos utilizados
-    fechar_filasNsems_torus();
 
-    exit(1);
+    libera_mem();
 
 }
 
