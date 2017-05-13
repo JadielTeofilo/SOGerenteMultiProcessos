@@ -38,3 +38,9 @@ struct mensagem_torus_ida
 
 }typedef InfoMsgTorus;
 
+struct mensagem_torus_volta
+{
+	long type;
+	short flag;
+
+}typedef InfoFlgTorus;

@@ -1,5 +1,8 @@
 #include "escalonador.h"
 
+//TODO \
+Tem funcoes que estao recebendo variaveis globais por parametro\
+ajeita ai shindi
 
 //TODO \
 colocar essas definicoes em outro arquivo e usar elas\
@@ -38,6 +41,16 @@ Criar uma definicao para lados esquerdo direito cima e baixo
 #define key_sem_8 0x1430
 #define key_sem_9 0x1431
 
+#define key_sem_volta_1 0x1523
+#define key_sem_volta_2 0x1524
+#define key_sem_volta_3 0x1525
+#define key_sem_volta_4 0x1526
+#define key_sem_volta_5 0x1527
+#define key_sem_volta_6 0x1528
+#define key_sem_volta_7 0x1529
+#define key_sem_volta_8 0x1530
+#define key_sem_volta_9 0x1531
+
 //Definicoes para os ids das filas
 int idfila_num_job;
 int idfila_estrutura;
@@ -58,9 +71,8 @@ int pid_filho[16];
 //id das filas de comunicacao do torus
 int id_torus_fila[64];
 int id_torus_sem[16];
+int id_torus_sem_volta[16];
 
-//id para operacao com semáforos
-int idsem;
 
 
 void enviar_num_job(jobNumType job_anterior, int idfila){
@@ -239,6 +251,38 @@ int roteador(int meu_id){
     }
 }
 
+//faz loop para receber e enviar msg de fim de execucao
+void tratar_msg_fim_exec(int meu_id){
+    InfoFlgTorus msg_flag;
+    int i;
+    int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
+    int ainda_n_reenviei = 1;
+    
+    // aguarda receber mensagens de fim de execucao \
+    podem ser 15 - meu_id para a primeira fileira ou meu_id/4 - 3 \
+    para o resto
+    for(i=0; i < (!meu_id % 4)?15 - meu_id: meu_id/4 - 3; i++){
+        // printf("lala %d\n", meu_id);
+        // aguarda o sinal de que recebeu uma mensagem
+        p_sem(id_torus_sem_volta[meu_id]);
+        //Pega entao as mensagem que recebeu e reenvia
+        for (int j = 2; j < 4; ++j)
+        {
+            int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
+            //Recebe a msg
+            if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 3, IPC_NOWAIT) > 0){
+                // envia a msg_flag para o proximo nodo
+                if(msgsnd(id_envio, &msg_flag, sizeof(msg_flag), IPC_NOWAIT)<0){
+                    printf("erro na hora de enviar msg fim exec\n");
+                    kill(getpid(), SIGTERM);
+                }
+                // ele sai caso ache uma msg
+                break;
+            }
+        } 
+    }
+}
+
 // Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
 InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem){
     InfoMsgTorus mensagem;
@@ -343,11 +387,24 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             //Aguarda o programa encerrar
             wait(&status);
 
-            // /TODO 
-            // Fazer a parte que envia mensagem de que terminou para o gerente 0
-            // //Recebe atual posicao e devolve a saida para chegar no gerente 0
-            // int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
-            //Enviar mensagem termino para o proximo
+
+            
+            //Mensagem para avisar que encerrou a execucao
+            InfoFlgTorus msg_flag;
+            msg_flag.type = 3;
+            msg_flag.flag = 1;
+
+            int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
+            //Enviar mensagem termino para o proximo nodo
+            if(msgsnd(id_envio, &msg_flag, sizeof(msg_flag), IPC_NOWAIT)<0){
+                printf("erro na hora de enviar msg fim exec\n");
+                kill(getpid(), SIGTERM);
+            }
+            //avisa o destinatario
+            v_sem(id_torus_sem_volta[id_envio]);
+            
+            //faz loop para receber e reenviar msg de fim de execucao
+            tratar_msg_fim_exec(meu_id);
             
 
         }
@@ -357,8 +414,13 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
 void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int key_fila = key_fila_6;
     int key_sem = key_sem_1;
+    int key_sem_volta = key_sem_volta_1;
     int i;
     int idfila;
+    int idsem;
+    int idsem_volta;
+
+
     for(i=0; i<64; i++){
         //Criar fila
         idfila = criar_fila(key_fila);
@@ -366,10 +428,13 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
         if(i < 16){
             //Criar semaforo
             idsem = criar_semaforo(key_sem);
+            idsem_volta = criar_semaforo(key_sem_volta);
             //salvar o id sem
             id_torus_sem[i] = idsem;
+            id_torus_sem_volta[i] = idsem_volta;
             //atualizar a key sem
             key_sem++; 
+            key_sem_volta++; 
         }
 
         //salvar o id fila
@@ -415,6 +480,7 @@ void fechar_filasNsems_torus(){
         excluir_fila(id_torus_fila[i]);
         if(i<16){
            excluir_semaforo(id_torus_sem[i]);
+           excluir_semaforo(id_torus_sem_volta[i]);
         }
     }
 }
