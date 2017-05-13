@@ -4,7 +4,7 @@
 #define key_fila_2 0x1224
 #define key_fila_3 0x1225
 #define key_fila_4 0x1226
-#define key_fila_5 0x1227
+#define key_fila_5 0x1226
 #define key_fila_6 0x1228   
 #define key_fila_7 0x1229
 #define key_fila_8 0x1230
@@ -205,7 +205,7 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
     }
 }
 
-
+// Repassa aos 4 vizinhos disponiveis a mensagem recebida
 InfoMsgTorus repassa_mensagem(int * id_torus_fila, int meu_id, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int i;
@@ -220,22 +220,24 @@ InfoMsgTorus repassa_mensagem(int * id_torus_fila, int meu_id, int * id_torus_se
 
     envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
 }
+
 //codigo do filho/gerenciador de execucao
 void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int status;
     int pid;
+
     //no gerenciador 0    
     if(meu_id==0){
         int id_ida_escal=-1;
         int id_volta_escal=-1;
 
         //pegar id para comunicacao com escalonador no gerenciador 0
-        if((id_ida_escal = msgget(0x1226, 0x1B6)) < 0){
+        if((id_ida_escal = msgget(key_fila_4, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador\n");
             kill(getpid(), SIGTERM);
         }
-        if((id_volta_escal = msgget(0x1227, 0x1B6)) < 0){
+        if((id_volta_escal = msgget(key_fila_5, 0x1B6)) < 0){
             printf("Nenhuma fila encontrada no gerenciador 0 para comunicacao com escalonador \n");
             kill(getpid(), SIGTERM);
 
@@ -270,7 +272,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     }
     else{
         while(1){
-
+            //Repassar um broadcast para um vizinho
             mensagem = repassa_mensagem(id_torus_fila, meu_id, id_torus_sem);
             if((pid = fork())<0){
                 printf("erro na criacao de fork\n");
