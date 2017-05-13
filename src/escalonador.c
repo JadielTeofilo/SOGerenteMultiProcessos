@@ -49,7 +49,7 @@ int pid_filho[16];
 
 //id das filas de comunicacao do torus
 int id_torus_fila[64];
-int id_torus_sem[64];
+int id_torus_sem[16];
 
 //id para operacao com semáforos
 int idsem;
@@ -87,7 +87,6 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
 
     return tabela_jobs;
 }
-
 
 int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     time_t current_time = time(NULL);
@@ -132,10 +131,7 @@ void informar_ger_exec_job(tipoTabela * dados_job){
         printf("erro na hora de enviar dados para o \n");
         kill(getpid(), SIGTERM);
     }
-
-
 }
-
 
 //calcula id da fila de envio para cada processo escalonador
 int calcular_vizinho_envio(int lado, int meu_id){
@@ -212,9 +208,10 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
     int i;
 
     for(i=0; i<4; i++){
-        printf("lala %d\n", meu_id);
+        // printf("lala %d\n", meu_id);
+        // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem[meu_id]);
-        printf("passou\n");
+        // printf("passou\n");
         int idfila = id_torus_fila[calcular_idfila_receber(i, meu_id)];
         msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT);
     }
@@ -306,17 +303,20 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
         //Criar fila
         idfila = criar_fila(key_fila);
 
-        //Criar semaforo
-        idsem = criar_semaforo(key_sem);
-        
-        //salvar os ids
-        id_torus_sem[i]=idsem;
-        id_torus_fila[i]=idfila;
+        if(i < 16){
+            //Criar semaforo
+            idsem = criar_semaforo(key_sem);
+            //salvar o id sem
+            id_torus_sem[i] = idsem;
+            //atualizar a key sem
+            key_sem++; 
+        }
 
-        //atualizar as keys
+        //salvar o id fila
+        id_torus_fila[i] = idfila;
+
+        //atualizar a key fila
         key_fila++;
-        key_sem++;
-
     }
 }
 
@@ -444,8 +444,6 @@ void escalonar(){
 
     }
 }
-
-
 
 
 int main(int argc, char *argv[])
