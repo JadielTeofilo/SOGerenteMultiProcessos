@@ -564,7 +564,6 @@ void escalonar(){
     id_shm = shmget(key_mem_compart_1,sizeof(int), IPC_CREAT| 0x1B6);
     int *shm_pid = shmat(id_shm, 0, 0x1B6);
     *shm_pid = getpid();
- char* c_time_string;
 
     //envia o proximo job para a fila de mensagens
     enviar_num_job(job_anterior, idfila_num_job);
