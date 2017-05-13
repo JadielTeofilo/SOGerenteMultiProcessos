@@ -167,6 +167,8 @@ int calcular_id_vizinho(int lado, int meu_id){
     switch(lado){
         case 0:
             lin = (lin-1)%4;
+            //caso menor que zero pegar o equivalente positivo
+            (lin < 0)?lin += 4 : lin;
             break;
         case 1:
             col = (col+1)%4;
@@ -176,6 +178,8 @@ int calcular_id_vizinho(int lado, int meu_id){
             break;
         case 3:
             col = (col-1)%4;
+            //caso menor que zero pegar o equivalente positivo
+            (col < 0)?col += 4 : col;
             break;
     }
     //calcula a id do vizinho
@@ -211,8 +215,9 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
             printf("erro na hora de enviar dados para o \n");
             kill(getpid(), SIGTERM);
         }
-        printf("ak %d \n", calcular_idfila_envio(i, meu_id));
+        // printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
+        // printf("%d id sem up\n",calcular_id_vizinho(i, meu_id));
         v_sem(id_torus_sem[calcular_id_vizinho(i, meu_id)]);
     }
 }
@@ -282,10 +287,10 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         }
         //recebe primeira msg do escalonador
         msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
-        printf("recebeu\n");
+        // printf("recebeu\n");
         // Envia mensagem para todos vizinhos 
         envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
-        printf("oi\n");
+        // printf("oi\n");
 
         //Roda o programa solicitado
         if((pid = fork())<0){
@@ -318,11 +323,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         while(1){
             //Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
             mensagem = trata_broadcast(id_torus_fila, meu_id, id_torus_sem);
+            printf("::%s\n",mensagem.arq_exec );
             if((pid = fork())<0){
                 printf("erro na criacao de fork\n");
                 kill(getpid(), SIGTERM);
             }
-            printf("::%s\n",mensagem.arq_exec );
             if(pid == 0){
                 if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
                     printf("erro na execução do arquivo");

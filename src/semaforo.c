@@ -27,7 +27,7 @@ int v_sem(int sem)
     operacao[0].sem_num = 0;
     operacao[0].sem_op = 1;
     operacao[0].sem_flg = 0;
-    if ( semop(sem, operacao, 1) < 0)
+    if (semop(sem, operacao, 1) < 0)
     	printf("erro no p=%d\n", errno);
 }
 
