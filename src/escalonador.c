@@ -52,7 +52,6 @@ int id_torus_fila[64];
 int id_torus_sem[64];
 
 //id para operacao com semáforos
-struct sembuf operacao[2];
 int idsem;
 
 
@@ -299,14 +298,16 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
         idfila = criar_fila(key_fila);
 
         //Criar semaforo
-        if ((idsem = semget(key_sem, 1, IPC_CREAT|0x1ff)) < 0)
-        {
-            printf("erro na criacao da fila\n");
-            kill(getpid(), SIGTERM);
-        }
+        idsem = criar_semaforo(key_sem);
+        
+        //salvar os ids
         id_torus_sem[i]=idsem;
         id_torus_fila[i]=idfila;
-        key++;
+
+        //atualizar as keys
+        key_fila++;
+        key_sem++;
+
     }
 }
 
@@ -338,11 +339,12 @@ void montar_torus(){
     }
 }
 
-void fechar_filas_torus(){
+//Exclui as filas e os semaforos utilizados
+void fechar_filasNsems_torus(){
     int i;
     for(i=0; i<64; i++){
         excluir_fila(id_torus_fila[i]);
-        semctl(id_torus_sem[i], 1, IPC_RMID, 0);
+        excluir_semaforo(id_torus_sem[i]);
     }
 }
 
@@ -370,7 +372,7 @@ void shutdown(){
 
     shmctl(id_shm, IPC_RMID, 0);
 
-    fechar_filas_torus();
+    fechar_filasNsems_torus();
 
     exit(1);
 

@@ -13,13 +13,16 @@ fila_mensagem.o: fila_mensagem.c
 tabela_job.o: tabela_job.c
 	gcc -c tabela_job.c tabela_job.h
 
-build2: escalonador.o fila_mensagem.o tabela_job.o
-	gcc escalonador.o fila_mensagem.o tabela_job.o -o ../binary/escalonador
+semaforo.o: semaforo.c
+	gcc -c semaforo.c semaforo.h
+
+build2: escalonador.o fila_mensagem.o tabela_job.o semaforo.o
+	gcc escalonador.o fila_mensagem.o tabela_job.o semaforo.o -o ../binary/escalonador
 
 escalonador.o: escalonador.c
 	gcc -c escalonador.c escalonador.h
 
-build3: shutdown.o fila_mensagem.o tabela_job.o
+build3: shutdown.o fila_mensagem.o tabela_job.o 
 	gcc shutdown.o fila_mensagem.o tabela_job.o -o ../binary/shutdown
 
 shutdown.o: shutdown.c
