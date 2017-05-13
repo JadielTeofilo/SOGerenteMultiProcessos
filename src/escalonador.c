@@ -5,6 +5,9 @@
 colocar essas definicoes em outro arquivo e usar elas\
 tbm no executa postergado
 
+//TODO \
+Criar uma definicao para lados esquerdo direito cima e baixo
+
 #define key_fila_1 0x1223
 #define key_fila_2 0x1224
 #define key_fila_3 0x1225
@@ -139,7 +142,7 @@ void informar_ger_exec_job(tipoTabela * dados_job){
 }
 
 //calcula id da fila de envio para cada processo escalonador
-int calcular_vizinho_envio(int lado, int meu_id){
+int calcular_idfila_envio(int lado, int meu_id){
     switch (lado){
         case 0: 
             return(meu_id*4);
@@ -187,13 +190,13 @@ int calcular_idfila_receber(int lado, int meu_id){
     //chama funcao para pegar o id da fila de retorno
     switch(lado){
         case 0:
-            return calcular_vizinho_envio( 2, id);
+            return calcular_idfila_envio( 2, id);
         case 1:
-            return calcular_vizinho_envio( 3, id);
+            return calcular_idfila_envio( 3, id);
         case 2:
-            return calcular_vizinho_envio( 0, id);
+            return calcular_idfila_envio( 0, id);
         case 3:
-            return calcular_vizinho_envio( 1, id);
+            return calcular_idfila_envio( 1, id);
     }
 }
 
@@ -201,14 +204,14 @@ int calcular_idfila_receber(int lado, int meu_id){
 void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, int * id_torus_sem){
     int i;
     for(i=0; i<4; i++){
-        int idfila = id_torus_fila[calcular_vizinho_envio(i, meu_id)];
+        int idfila = id_torus_fila[calcular_idfila_envio(i, meu_id)];
 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para o \n");
             kill(getpid(), SIGTERM);
         }
-        printf("ak %d \n", calcular_vizinho_envio(i, meu_id));
+        printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
         v_sem(id_torus_sem[calcular_id_vizinho(i, meu_id)]);
     }
@@ -221,12 +224,11 @@ int roteador(int meu_id){
     switch(meu_id%4){
         //Caso sejam da primeira coluna o destino eh para cima
         case 0:
-            return calcular_id_vizinho(1, meu_id);
+            return 1;
         //Caso contrario o destino eh para o lado esquerdo
         default:
-            return calcular_id_vizinho(0, meu_id);
+            return 0;
     }
-
 }
 
 // Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
@@ -329,8 +331,12 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             //Aguarda o programa encerrar
             wait(&status);
 
-            //TODO \
-            Fazer a parte que envia mensagem de que terminou para o gerente 0
+            // /TODO 
+            // Fazer a parte que envia mensagem de que terminou para o gerente 0
+            // //Recebe atual posicao e devolve a saida para chegar no gerente 0
+            // int id_envio = calcular_idfila_envio(roteador(meu_id),meu_id);
+            //Enviar mensagem termino para o proximo
+            
 
         }
     }
