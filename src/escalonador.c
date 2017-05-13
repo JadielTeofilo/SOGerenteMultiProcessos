@@ -151,12 +151,15 @@ int calcular_vizinho_envio(int lado, int meu_id){
 
 }
 
+//Retorna o id do vizinho do 'lado' lado
+void calcula_id_vizinho(int lado, int meu_id){}
+
 //Retorna o id da fila para receber msg do 'lado' lado
 int calcular_idfila_receber(int lado, int meu_id){
     //calcular a propria posicao 
     int col = meu_id%4;
     int lin = meu_id/4;
-    //calcula a posicao do visinho
+    //calcula a posicao do vizinho
     switch(lado){
         case 0:
             lin = (lin-1)%4;
@@ -212,8 +215,17 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
         // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem[meu_id]);
         // printf("passou\n");
-        int idfila = id_torus_fila[calcular_idfila_receber(i, meu_id)];
-        msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT);
+        int recebeu = 0;
+        //Pega entao a mensagem que recebeu de algum dos lados
+        for (int j = 0; j < 4; ++j)
+        {
+            int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
+            if(msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT) > 0)
+                recebeu++;
+        } 
+        printf("recebeu%d\n", recebeu);
+        //caso ele recebeu mais de uma ao mesmo tempo, diminui as iteracoes do for
+        i += recebeu - 1;
     }
 
     envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
@@ -353,7 +365,9 @@ void fechar_filasNsems_torus(){
     int i;
     for(i=0; i<64; i++){
         excluir_fila(id_torus_fila[i]);
-        excluir_semaforo(id_torus_sem[i]);
+        if(i<16){
+           excluir_semaforo(id_torus_sem[i]);
+        }
     }
 }
 
