@@ -152,10 +152,7 @@ int calcular_vizinho_envio(int lado, int meu_id){
 }
 
 //Retorna o id do vizinho do 'lado' lado
-void calcula_id_vizinho(int lado, int meu_id){}
-
-//Retorna o id da fila para receber msg do 'lado' lado
-int calcular_idfila_receber(int lado, int meu_id){
+int calcula_id_vizinho(int lado, int meu_id){
     //calcular a propria posicao 
     int col = meu_id%4;
     int lin = meu_id/4;
@@ -175,7 +172,14 @@ int calcular_idfila_receber(int lado, int meu_id){
             break;
     }
     //calcula a id do vizinho
-    int id = col * 4 + lin;
+    return col * 4 + lin;
+}
+
+//Retorna o id da fila para receber msg do 'lado' lado
+int calcular_idfila_receber(int lado, int meu_id){
+    //calcula a id do vizinho
+    int id = calcula_id_vizinho(lado, meu_id);
+
     //chama funcao para pegar o id da fila de retorno
     switch(lado){
         case 0:
