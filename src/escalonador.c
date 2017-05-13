@@ -1,5 +1,10 @@
 #include "escalonador.h"
 
+
+//TODO \
+colocar essas definicoes em outro arquivo e usar elas\
+tbm no executa postergado
+
 #define key_fila_1 0x1223
 #define key_fila_2 0x1224
 #define key_fila_3 0x1225
@@ -148,11 +153,10 @@ int calcular_vizinho_envio(int lado, int meu_id){
         case 3:
             return((meu_id*4)+3);
     }
-
 }
 
 //Retorna o id do vizinho do 'lado' lado
-int calcula_id_vizinho(int lado, int meu_id){
+int calcular_id_vizinho(int lado, int meu_id){
     //calcular a propria posicao 
     int col = meu_id%4;
     int lin = meu_id/4;
@@ -178,7 +182,7 @@ int calcula_id_vizinho(int lado, int meu_id){
 //Retorna o id da fila para receber msg do 'lado' lado
 int calcular_idfila_receber(int lado, int meu_id){
     //calcula a id do vizinho
-    int id = calcula_id_vizinho(lado, meu_id);
+    int id = calcular_id_vizinho(lado, meu_id);
 
     //chama funcao para pegar o id da fila de retorno
     switch(lado){
@@ -205,8 +209,24 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
             kill(getpid(), SIGTERM);
         }
         printf("ak %d \n", calcular_vizinho_envio(i, meu_id));
-        v_sem(id_torus_sem[calcular_vizinho_envio(i, meu_id)]);
+        //desbloqueia o vizinho para receber a msg
+        v_sem(id_torus_sem[calcular_id_vizinho(i, meu_id)]);
     }
+}
+
+//Recebe atual posicao e devolve a saida para chegar no gerente 0
+int roteador(int meu_id){
+
+    //calcula a saida 
+    switch(meu_id%4){
+        //Caso sejam da primeira coluna o destino eh para cima
+        case 0:
+            return calcular_id_vizinho(1, meu_id);
+        //Caso contrario o destino eh para o lado esquerdo
+        default:
+            return calcular_id_vizinho(0, meu_id);
+    }
+
 }
 
 // Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
@@ -214,25 +234,27 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
     InfoMsgTorus mensagem;
     int i;
 
+    //aguarda receber 4 mensagens
     for(i=0; i<4; i++){
         // printf("lala %d\n", meu_id);
         // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem[meu_id]);
-        // printf("passou\n");
-        int recebeu = 0;
+        printf("passou\n");
         //Pega entao a mensagem que recebeu de algum dos lados
         for (int j = 0; j < 4; ++j)
         {
             int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
-            if(msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT) > 0)
-                recebeu++;
+            if(msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT) > 0){
+                // ele sai caso ache uma msg
+                break;
+            }
         } 
-        printf("recebeu%d\n", recebeu);
-        //caso ele recebeu mais de uma ao mesmo tempo, diminui as iteracoes do for
-        i += recebeu - 1;
-    }
 
+    }
+    // envia a mensagem para os quatro lados
     envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+
+    return mensagem;
 }
 
 //codigo do filho/gerenciador de execucao
@@ -304,7 +326,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     printf("erro na execução do arquivo");
                 }
             }
+            //Aguarda o programa encerrar
             wait(&status);
+
+            //TODO \
+            Fazer a parte que envia mensagem de que terminou para o gerente 0
 
         }
     }
