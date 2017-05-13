@@ -124,8 +124,9 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
     }
 }
-//realiza broadcast com informcoes do novo job para os gerenciadores
-void informar_ger_exec_job(tipoTabela * dados_job){
+
+//realiza passar mensagem com dados para o gerente zero 
+void informar_ger_exec_zero(tipoTabela * dados_job){
     InfoMsgTorus mensagem;
     printf("enviou\n");
     mensagem.type = 2;
@@ -134,6 +135,7 @@ void informar_ger_exec_job(tipoTabela * dados_job){
     strcpy(mensagem.arq_exec, dados_job->arq_exec);
     mensagem.data = dados_job->data;
 
+    //mandar mensagem para o zero
     if(msgsnd(idfila_escal_gerente0_ida, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
     //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
         printf("erro na hora de enviar dados para o \n");
@@ -207,6 +209,7 @@ int calcular_idfila_receber(int lado, int meu_id){
 //Envia a "mensagem" para os quatro vizinhos
 void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, int * id_torus_sem){
     int i;
+
     for(i=0; i<4; i++){
         int idfila = id_torus_fila[calcular_idfila_envio(i, meu_id)];
 
@@ -217,7 +220,7 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
         }
         // printf("ak %d \n", calcular_idfila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
-        // printf("%d id sem up\n",calcular_id_vizinho(i, meu_id));
+        // printf("desbloqueia o %d\n",calcular_id_vizinho(i, meu_id));
         v_sem(id_torus_sem[calcular_id_vizinho(i, meu_id)]);
     }
 }
@@ -240,28 +243,32 @@ int roteador(int meu_id){
 InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem){
     InfoMsgTorus mensagem;
     int i;
+    int ainda_n_enviei = 1;
 
     //aguarda receber 4 mensagens
     for(i=0; i<4; i++){
         // printf("lala %d\n", meu_id);
         // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem[meu_id]);
-        printf("passou\n");
         //Pega entao a mensagem que recebeu de algum dos lados
         for (int j = 0; j < 4; ++j)
         {
             int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
-            if(msgrcv(idfila, &mensagem , sizeof(mensagem), 0, IPC_NOWAIT) > 0){
+            if(msgrcv(idfila, &mensagem , sizeof(mensagem), 2, IPC_NOWAIT) > 0){
+                // envia a mensagem para os quatro lados
+                if(ainda_n_enviei){
+                    envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+                    ainda_n_enviei = 0;
+                }
                 // ele sai caso ache uma msg
                 break;
             }
         } 
-
     }
-    // envia a mensagem para os quatro lados
-    envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
 
-    return mensagem;
+    InfoMsgTorus mensagem_aux = mensagem;
+
+    return mensagem_aux;
 }
 
 //codigo do filho/gerenciador de execucao
@@ -323,7 +330,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         while(1){
             //Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
             mensagem = trata_broadcast(id_torus_fila, meu_id, id_torus_sem);
-            printf("::%s\n",mensagem.arq_exec );
+            // printf("::%s\n",mensagem.arq_exec );
             if((pid = fork())<0){
                 printf("erro na criacao de fork\n");
                 kill(getpid(), SIGTERM);
@@ -490,7 +497,7 @@ void escalonar(){
             //funcao chama os gerenciadores de execucao para executar o job
 
 
-            informar_ger_exec_job(tabela_jobs);
+            informar_ger_exec_zero(tabela_jobs);
             tabela_jobs = pop_job(tabela_jobs);
         }
 
