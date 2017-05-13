@@ -13,6 +13,7 @@ mensagens
 **/
 
 #include "executa_postergado.h"
+#include <unistd.h>
 
 
 
@@ -36,6 +37,14 @@ int verificar_num_param(int num){
 		printf("Num de parametros invalido\n");
 		exit(0);
 	}
+}
+
+int existe_arquivo(char * arqin){
+	if(access(arqin, F_OK)==-1){
+		printf("arquivo invalido\n");
+		exit(0);
+	}
+
 }
 
 //Recebe mensagem do escalonador com o identificador do ultimo job
@@ -115,6 +124,9 @@ int main(int argc, char *argv[])
 	
 	//Verifica se o numero de segundos eh um numero
 	is_num(seg);
+
+	//verifica se o arquivo existe
+	existe_arquivo(argv[2]);
 
 	//Pega o job anterior atraves de uma mensagem do escalonador
 	job_anterior = pegar_ultimo_job();
