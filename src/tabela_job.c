@@ -70,13 +70,6 @@ tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoT
 				ptr_new_node->prox = ptr_inicial;
 				return ptr_new_node;
 			}
-			//Caso a posicao seja a ultima
-			if(ptr_tabela->prox == NULL){
-				// Coloca o nodo no inicio
-				ptr_new_node->prox = NULL;
-				ptr_tabela->prox = ptr_new_node;
-				return ptr_inicial;
-			}
 			//Caso seja em algum lugar no meio
 			ptr_anterior->prox = ptr_new_node;
 			ptr_new_node->prox = ptr_tabela;
