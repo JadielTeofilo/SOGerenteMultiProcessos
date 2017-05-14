@@ -69,7 +69,7 @@ int pegar_ultimo_job(){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
-   	printf("mensagem recebida = %d\n", job_anterior.job_num);
+   	// printf("mensagem recebida = %d\n", job_anterior.job_num);
 
    	num_aux = job_anterior.job_num;
 
@@ -86,7 +86,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	mensagem.type = 1;
 	//define o identificador unico do job
 	mensagem.job = job_anterior;
-	printf("job enviado: %d\n", mensagem.job);
+	// printf("job enviado: %d\n", mensagem.job);
 	
 	//aloca e passa o nome do executavel para a estrutura
 	strcpy(mensagem.arq_exec, arq_exec);
@@ -107,10 +107,10 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 		printf("Problema ao enviar as info do novo job\n");
 	}
 	// Conveter para string a data
-    char *c_time_string = ctime(&mensagem.data);
-    printf("::job = %d\n", mensagem.job);
-    printf("::arquivo = %s\n", mensagem.arq_exec);
-    printf("::%s\n", c_time_string);
+    // char *c_time_string = ctime(&mensagem.data);
+    // printf("::job = %d\n", mensagem.job);
+    // printf("::arquivo = %s\n", mensagem.arq_exec);
+    // printf("::%s\n", c_time_string);
 
 
 }

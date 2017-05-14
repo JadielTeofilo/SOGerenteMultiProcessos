@@ -528,9 +528,6 @@ void montar_torus(){
     //Criar as filas para comunicacao entre os gerentes
     criar_filasNsem_torus(id_torus_fila, id_torus_sem);
 
-    printf("-------%d \n", id_torus_fila[calcular_index_fila_envio(0, 4)] );
-    /* cria semaforo*/
-
 
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
@@ -599,6 +596,9 @@ void escalonar(){
     //cria os gerentes de execução segundo a topologia torus
     montar_torus();
 
+    //para a conversao do time_t
+    char *c_time_string;
+
     while(1){
         //Le um novo job inserido 
         tabela_jobs = atualiza_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
@@ -608,17 +608,21 @@ void escalonar(){
             //funcao chama os gerenciadores de execucao para executar o job
             inicio = clock();
             informar_ger_exec_zero(tabela_jobs);
+            //Aguarda o fim da execucao de todos
+            if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
+                fim = clock();
+                //calcula o tempo de exec
+                turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
+                //converte o tempo de inicio
+                c_time_string = ctime(&tabela_jobs->data);
+                printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
+                        tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
+            }
 
             tabela_jobs = pop_job(tabela_jobs);
             
         }
 
-        if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, IPC_NOWAIT) > 0){
-            fim = clock();
-            turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
-            printf("Todos acabaram a execucao em %f\n", turnaround);
-
-        }
 
 
 
