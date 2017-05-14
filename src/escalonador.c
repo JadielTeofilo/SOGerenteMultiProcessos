@@ -97,7 +97,7 @@ void libera_mem(){
     excluir_fila(idfila_escal_gerente0_ida);
     excluir_fila(idfila_escal_gerente0_volta);
 
-
+    fechar_filasNsems_torus();
 
     // Matar os gerentes
     for (int i = 0; i < 16; i++)
@@ -110,7 +110,7 @@ void libera_mem(){
     //liberar a memoria compartilhada
     shmctl(id_shm, IPC_RMID, 0);
 
-    fechar_filasNsems_torus();
+    
 
     exit(1);
 }
@@ -379,7 +379,10 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             }
             while(1){
                 //recebe primeira msg do escalonador
-                msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 0, 0);
+                if(msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 2, 0)<0){
+                    printf("erro na recepção de mensagem do escalonador\n");
+                    libera_mem();
+                }
                 // printf("recebeu\n");
                 // Envia mensagem para todos vizinhos 
                 envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
@@ -391,8 +394,9 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     libera_mem();
                 }
                 if(pid == 0){
+                    //printf("%s\n", mensagem.arq_exec);
                     if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
-                        printf("erro no execl\n");
+                        printf("erro no execl do %d\n", meu_id);
                         libera_mem();
                     }
                 }
@@ -582,7 +586,6 @@ void escalonar(){
         //funcao que dorme ate chegar o momento de executar um job
         if(checar_horario_execucao_job(tabela_jobs)){
             //funcao chama os gerenciadores de execucao para executar o job
-
             inicio = clock();
             informar_ger_exec_zero(tabela_jobs);
 
