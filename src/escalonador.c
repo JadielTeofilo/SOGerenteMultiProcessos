@@ -392,6 +392,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                 }
                 if(pid == 0){
                     if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
+                        printf("erro no execl\n");
                         libera_mem();
                     }
                 }

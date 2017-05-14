@@ -55,7 +55,7 @@ tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoT
 
 		//Caso a data seja maior e nao eh o ultimo nodo
 		if(ptr_new_node->data > ptr_tabela->data){
-			if(ptr_tabela->prox != NULL){
+			if(ptr_tabela->prox == NULL){
 				ptr_tabela->prox = ptr_new_node;
 				return ptr_inicial;
 			}else{
