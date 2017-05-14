@@ -266,10 +266,11 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
 
     for(i=0; i<4; i++){
         int idfila = id_torus_fila[calcular_index_fila_envio(i, meu_id)];
+        //printf("%d ---%d: %d->%d\n",meu_id,calcular_id_vizinho(i, meu_id), calcular_index_fila_envio(i, meu_id), idfila);
 
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
-            printf("erro na hora de enviar dados para os vizinhos errno: %d\n",errno);
+            printf("erro na hora de enviar dados para os vizinhos errno: %d - %d:%d\n",errno, meu_id, idfila);
             libera_mem();
             //return;
         }
@@ -327,6 +328,7 @@ void tratar_msg_fim_exec(int meu_id){
 // Aguarda o recebimento de mensagens vindas dos 4 vizinhos e depois envia 1 mensagem
 InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem){
     InfoMsgTorus mensagem;
+    InfoMsgTorus mensagem_aux;
     int i;
     int ainda_n_enviei = 1;
 
@@ -340,9 +342,11 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
         {
             int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
             if(msgrcv(idfila, &mensagem , sizeof(mensagem), 2, IPC_NOWAIT) > 0){
+                //printf("sou %d recebi de %d\n",meu_id, calcular_idfila_receber(j, meu_id));
                 // envia a mensagem para os quatro lados
+                mensagem_aux = mensagem;
                 if(ainda_n_enviei){
-                    envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
+                    envia_msgs_vizinho(mensagem_aux, meu_id, id_torus_fila, id_torus_sem);
                     ainda_n_enviei = 0;
                 }
                 // ele sai caso ache uma msg
@@ -351,7 +355,7 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
         } 
     }
 
-    InfoMsgTorus mensagem_aux = mensagem;
+
 
     return mensagem_aux;
 }
@@ -386,8 +390,24 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                 // printf("recebeu\n");
                 // Envia mensagem para todos vizinhos 
                 envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
-                // printf("oi\n");
-
+                //laco para receber todos os avisos de termino
+                int i;
+                for(i=0; i<4; i++){
+                    // printf("lala %d\n", meu_id);
+                    // aguarda o sinal de que recebeu uma mensagem
+                    p_sem(id_torus_sem[meu_id]);
+                    //Pega entao a mensagem que recebeu de algum dos lados
+                    for (int j = 0; j < 4; ++j)
+                    {
+                        int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
+                        if(msgrcv(idfila, &mensagem , sizeof(mensagem), 2, IPC_NOWAIT) > 0){
+                            //printf("sou %d recebi de %d\n",meu_id, calcular_idfila_receber(j, meu_id));
+                            // envia a mensagem para os quatro lados
+                            // ele sai caso ache uma msg
+                            break;
+                        }
+                    } 
+                }
                 //Roda o programa solicitado
                 if((pid = fork())<0){
                     printf("erro na criacao de fork\n");
@@ -508,7 +528,7 @@ void montar_torus(){
     //Criar as filas para comunicacao entre os gerentes
     criar_filasNsem_torus(id_torus_fila, id_torus_sem);
 
- 
+    printf("-------%d \n", id_torus_fila[calcular_index_fila_envio(0, 4)] );
     /* cria semaforo*/
 
 
