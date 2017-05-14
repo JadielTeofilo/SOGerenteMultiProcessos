@@ -89,6 +89,7 @@ void fechar_filasNsems_torus(){
 }
 
 void libera_mem(){
+    
     //libera todas as estruturas de dados utilizados
     free_job_table(tabela_jobs);
     excluir_fila(idfila_num_job);
@@ -98,6 +99,8 @@ void libera_mem(){
     excluir_fila(idfila_escal_gerente0_volta);
 
     fechar_filasNsems_torus();
+    //liberar a memoria compartilhada
+    shmctl(id_shm, IPC_RMID, 0);
 
     // Matar os gerentes
     for (int i = 0; i < 16; i++)
@@ -107,8 +110,6 @@ void libera_mem(){
     //aguardar a morte dos gerentes
     while(wait(&status) != -1);
 
-    //liberar a memoria compartilhada
-    shmctl(id_shm, IPC_RMID, 0);
 
     
 
@@ -140,7 +141,7 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
                                         info_job.arq_exec, tabela_jobs);
 
     //envia o ultimo job atualizado
-    printf("mensagem enviada: %d\n", job_anterior.job_num);
+    // printf("mensagem enviada: %d\n", job_anterior.job_num);
     //define o identificador unico do job como o anterior + 1
     job_anterior.type = 1;
     job_anterior.job_num = info_job.job+1;
@@ -384,7 +385,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
             while(1){
                 //recebe primeira msg do escalonador
                 if(msgrcv(id_ida_escal, &mensagem , sizeof(mensagem), 2, 0)<0){
-                    printf("erro na recepção de mensagem do escalonador\n");
+                    // printf("erro na recepção de mensagem do escalonador\n");
                     libera_mem();
                 }
                 // printf("recebeu\n");
