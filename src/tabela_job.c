@@ -17,7 +17,7 @@ Implementacao em forma de uma lista encadeada
 tipoTabela * init_job_table(){
 	return NULL;
 }
-
+//Inicia a lista de executados
 tipoExec * init_job_table_exec(){
 	return NULL;
 }
@@ -31,7 +31,7 @@ void free_job_table(tipoTabela* ptr_tabela){
 		ptr_tabela = ptr_prox;
 	}
 }
-
+//libera os compos da lista
 void free_job_table_exec(tipoExec* ptr_tabela){
 	tipoExec * ptr_prox = ptr_tabela;
 	while(ptr_tabela!=NULL){
@@ -40,7 +40,7 @@ void free_job_table_exec(tipoExec* ptr_tabela){
 		ptr_tabela = ptr_prox;
 	}
 }
-
+//verifica se lista eh vazia
 int eh_vazia(tipoTabela * ptr){
 	return (ptr == NULL);
 }
@@ -115,9 +115,8 @@ tipoTabela * pop_job(tipoTabela * ptr_tabela){
 	return ptr_tabela;
 }
 
-
+//insere dados na tabela de executados
 tipoExec* insere_job(tipoTabela* tabela_jobs, tipoExec* tabela_exec, time_t inicio, time_t fim){
-	//tipoExec* tabela_aux;
 
 	tipoExec * tabela_aux = (tipoExec*) malloc(sizeof(tipoExec));
 

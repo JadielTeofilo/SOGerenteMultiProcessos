@@ -88,7 +88,7 @@ void fechar_filasNsems_torus(){
         }
     }
 }
-
+//funao que soh libera as estruturas de dados
 void libera_mem(){
     
     //libera todas as estruturas de dados utilizados
@@ -100,7 +100,9 @@ void libera_mem(){
     excluir_fila(idfila_escal_gerente0_ida);
     excluir_fila(idfila_escal_gerente0_volta);
 
+    //libera filas e semaforos
     fechar_filasNsems_torus();
+
     //liberar a memoria compartilhada
     shmctl(id_shm, IPC_RMID, 0);
 
@@ -118,14 +120,14 @@ void libera_mem(){
     exit(1);
 }
 
-
+//envia o valor do ultimo job para o executa postergado
 void enviar_num_job(jobNumType job_anterior, int idfila){
     if(msgsnd(idfila, &job_anterior, sizeof(job_anterior), IPC_NOWAIT) < 0){
     //if(msgsnd(idfila, &job_anterior, sizeof(job_anterior)-sizeof(long), 0, 0) >= 0){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
-
+//se tiver mensagem do executa postergado, a lista de jobs eh atualizada
 tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
     jobInfoType mensagem;
     jobInfoType info_job;
@@ -143,7 +145,6 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
                                         info_job.arq_exec, tabela_jobs);
 
     //envia o ultimo job atualizado
-    // printf("mensagem enviada: %d\n", job_anterior.job_num);
     //define o identificador unico do job como o anterior + 1
     job_anterior.type = 1;
     job_anterior.job_num = info_job.job+1;
@@ -151,7 +152,7 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
 
     return tabela_jobs;
 }
-
+//verifica se já esta na hora de algum job executar
 int checar_horario_execucao_job(tipoTabela * tabela_jobs){
     time_t current_time = time(NULL);
     //se a tabela for vazia, não tem programa para executar
@@ -194,8 +195,6 @@ void imprimir_executados(tipoExec* tabela_executados){
         tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_executados->inicio), ctime(&tabela_executados->fim));
         
     }
-
-
 }
 
 //realiza passar mensagem com dados para o gerente zero 
@@ -207,7 +206,7 @@ void informar_ger_exec_zero(tipoTabela * dados_job){
     strcpy(mensagem.arq_exec, dados_job->arq_exec);
     mensagem.data = dados_job->data;
 
-    //mandar mensagem para o zero
+    //mandar mensagem para o zero com dados do programa a ser executado
     if(msgsnd(idfila_escal_gerente0_ida, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
     //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
         printf("erro na hora de enviar dados para o gerente 0\n");
@@ -218,6 +217,7 @@ void informar_ger_exec_zero(tipoTabela * dados_job){
 //calcula id da fila de envio para cada processo escalonador
 int calcular_index_fila_envio(int lado, int meu_id){
     switch (lado){
+        //caso de fila para cima
         case 0: 
             return(meu_id*4);
         //caso de fila para a direita  
@@ -268,6 +268,7 @@ int calcular_idfila_receber(int lado, int meu_id){
     int id = calcular_id_vizinho(lado, meu_id);
 
     //chama funcao para pegar o id da fila de retorno
+    //descobre sabendo quem deve enviar para meu_id, sabendo assim de quem meu_id deve receber
     switch(lado){
         case 0:
             return calcular_index_fila_envio( 2, id);
@@ -286,17 +287,14 @@ void envia_msgs_vizinho(InfoMsgTorus mensagem, int meu_id, int * id_torus_fila, 
 
     for(i=0; i<4; i++){
         int idfila = id_torus_fila[calcular_index_fila_envio(i, meu_id)];
-        //printf("%d ---%d: %d->%d\n",meu_id,calcular_id_vizinho(i, meu_id), calcular_index_fila_envio(i, meu_id), idfila);
-
+      
         if(msgsnd(idfila, &mensagem, sizeof(mensagem), IPC_NOWAIT)<0){
         //if(msgsnd(idfila_escal_gerente0_ida, &dados_job, sizeof(tipoTabela)-sizeof(long), IPC_NOWAIT)<0){
             printf("erro na hora de enviar dados para os vizinhos errno: %d - %d:%d\n",errno, meu_id, idfila);
             libera_mem();
             //return;
         }
-        // printf("ak %d \n", calcular_index_fila_envio(i, meu_id));
         //desbloqueia o vizinho para receber a msg
-        // printf("desbloqueia o %d\n",calcular_id_vizinho(i, meu_id));
         v_sem(id_torus_sem[calcular_id_vizinho(i, meu_id)]);
     }
 }
@@ -306,6 +304,18 @@ int roteador(int meu_id){
 
     //Caso sejam da primeira coluna o destino eh para cima
     //Caso contrario o destino eh para o lado esquerdo
+
+    // 0 <- 1 <- 2 <- 3
+    // ^
+    // |
+    // 4 <- 5 <- 6 <- 7
+    // ^
+    // |
+    // 8 <- 9 <- 10<- 11
+    // ^
+    // |
+    // 12<- 13<- 14<- 15
+
     return (meu_id%4)? 3 : 0;
 }
 
@@ -319,12 +329,13 @@ void tratar_msg_fim_exec(int meu_id){
     // aguarda receber mensagens de fim de execucao \
     podem ser 15 - meu_id para a primeira fileira ou meu_id/4 - 3 \
     para o resto
+
     int numRep = (!(meu_id % 4))?15 - meu_id: abs((4 - meu_id%4) - 1);
 
     for(int i=0; i < numRep; ++i){
         // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem_volta[meu_id]);
-        // printf("eu %d, nao estou esperando\n", meu_id);
+
         //Pega entao as mensagem que recebeu e reenvia
         for (int j = 1; j < 3; ++j)
         {
@@ -336,6 +347,7 @@ void tratar_msg_fim_exec(int meu_id){
                     printf("erro na hora de enviar msg fim exec\n");
                     libera_mem();
                 }
+                //libera o nodo avisando que a mensagem foi enviada
                 v_sem(id_torus_sem_volta[id_envio_sem]);
                 // ele sai caso ache uma msg
                 break;
@@ -354,7 +366,6 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
 
     //aguarda receber 4 mensagens
     for(i=0; i<4; i++){
-        // printf("lala %d\n", meu_id);
         // aguarda o sinal de que recebeu uma mensagem
         p_sem(id_torus_sem[meu_id]);
         //Pega entao a mensagem que recebeu de algum dos lados
@@ -362,10 +373,10 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
         {
             int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
             if(msgrcv(idfila, &mensagem , sizeof(mensagem), 2, IPC_NOWAIT) > 0){
-                //printf("sou %d recebi de %d\n",meu_id, calcular_idfila_receber(j, meu_id));
                 // envia a mensagem para os quatro lados
                 mensagem_aux = mensagem;
                 if(ainda_n_enviei){
+                    //soh envia para os vizinhos se não tiver enviado desse conjunto de mensagens
                     envia_msgs_vizinho(mensagem_aux, meu_id, id_torus_fila, id_torus_sem);
                     ainda_n_enviei = 0;
                 }
@@ -374,9 +385,6 @@ InfoMsgTorus trata_broadcast(int * id_torus_fila, int meu_id, int * id_torus_sem
             }
         } 
     }
-
-
-
     return mensagem_aux;
 }
 
@@ -386,7 +394,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     int status;
     int pid;
     while(1){
-        //no gerenciador 0    
+        //o gerenciador 0 possui comportamento diferente pois se comunica com o escalonador  
         if(meu_id==0){
             int id_ida_escal=-1;
             int id_volta_escal=-1;
@@ -407,13 +415,11 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     // printf("erro na recepção de mensagem do escalonador\n");
                     libera_mem();
                 }
-                // printf("recebeu\n");
                 // Envia mensagem para todos vizinhos 
                 envia_msgs_vizinho(mensagem, meu_id, id_torus_fila, id_torus_sem);
                 //laco para receber todos os avisos de termino
                 int i;
                 for(i=0; i<4; i++){
-                    // printf("lala %d\n", meu_id);
                     // aguarda o sinal de que recebeu uma mensagem
                     p_sem(id_torus_sem[meu_id]);
                     //Pega entao a mensagem que recebeu de algum dos lados
@@ -421,8 +427,6 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     {
                         int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
                         if(msgrcv(idfila, &mensagem , sizeof(mensagem), 2, IPC_NOWAIT) > 0){
-                            //printf("sou %d recebi de %d\n",meu_id, calcular_idfila_receber(j, meu_id));
-                            // envia a mensagem para os quatro lados
                             // ele sai caso ache uma msg
                             break;
                         }
@@ -434,7 +438,6 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     libera_mem();
                 }
                 if(pid == 0){
-                    //printf("%s\n", mensagem.arq_exec);
                     if(execl(mensagem.arq_exec, mensagem.arq_exec, NULL)<0){
                         printf("erro no execl do %d\n", meu_id);
                         libera_mem();
@@ -454,7 +457,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                     for (int j = 1; j < 3; ++j)
                     {
                         int idfila = id_torus_fila[calcular_idfila_receber(j, meu_id)];
-                        //Recebe a msg
+                        //Recebe a msg de termino
                         if(msgrcv(idfila, &msg_flag , sizeof(msg_flag), 4, IPC_NOWAIT) > 0){
                             //incrementa num finalizados
                             num_finalizados++;
@@ -462,6 +465,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
                             break;
                         }
                     }
+                    //o nodo 0 deve receber 15 avisos de finalizado para enviar informações para o escalonador
                     if(num_finalizados == 15){
                         break;
                     }
@@ -506,6 +510,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
     }
 }
 
+//cria as filas e os semaforos
 void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int key_fila = key_fila_6;
     int key_sem = key_sem_1;
@@ -514,7 +519,6 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int idfila;
     int idsem;
     int idsem_volta;
-
 
     for(i=0; i<64; i++){
         //Criar fila
@@ -548,7 +552,6 @@ void montar_torus(){
     //Criar as filas para comunicacao entre os gerentes
     criar_filasNsem_torus(id_torus_fila, id_torus_sem);
 
-
     //monta os 16 filhos que irao se comunicar entre eles
     for(i=0; i<16; i++){
         meu_id = i;
@@ -565,20 +568,22 @@ void montar_torus(){
     }
 }
 
+//desliga o programa
 void shutdown(){
-    //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
+    //imprime as informaçoes dos jobs que jah foram executados
     imprimir_executados(tabela_exec);
 
     //imprime as informações dos jobs que não foram executados
     imprimir_remanescentes(tabela_jobs);
     printf("Desligando o Programa...\n");
-    //Exclui as filas e os semaforos utilizados
 
+    //Exclui as filas e os semaforos utilizados
     libera_mem();
 
 }
 
 void escalonar(){
+    //quando receber um sinal de termino, desliga
     signal(SIGTERM, shutdown);
     InfoFlgTorus msg_flag;
 
@@ -587,9 +592,12 @@ void escalonar(){
     clock_t fim;
     float turnaround;
 
+    //utilizado para informar valor do ultimo job
     jobNumType job_anterior;
     job_anterior.type = 1;
     job_anterior.job_num = 1;
+
+    //para enviar e receber mensagem de outros processos
     idfila_num_job = -1;
     idfila_estrutura = -1;
     idfila_shutdown = -1;
@@ -608,7 +616,7 @@ void escalonar(){
     int *shm_pid = shmat(id_shm, 0, 0x1B6);
     *shm_pid = getpid();
 
-    //envia o proximo job para a fila de mensagens
+    //envia o primeiro job para a fila de mensagens
     enviar_num_job(job_anterior, idfila_num_job);
 
     //Iniciar tabela de jobs
@@ -627,30 +635,26 @@ void escalonar(){
 
         //funcao que dorme ate chegar o momento de executar um job
         if(checar_horario_execucao_job(tabela_jobs)){
-            //funcao chama os gerenciadores de execucao para executar o job
+            //começa a contar o tempo de execuçao
             inicio = clock();
+
+            //funcao chama os gerenciadores de execucao para executar o job
             informar_ger_exec_zero(tabela_jobs);
             //Aguarda o fim da execucao de todos
             if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
+                //finaliza de contar o tempo de execução
                 fim = clock();
-                //passa as informacoes para a tabela de executados
 
                 //calcula o tempo de exec
                 turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
-                //converte o tempo de inicio
+                //converte o tempo agendado
                 c_time_string = ctime(&tabela_jobs->data);
                 printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
                         tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
-
+                //insere dados na tabela de jobs jah executados
                 tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
-                char* c_time_string_aux;
-                c_time_string_aux = ctime(&tabela_exec->data);
-                printf("-----%s\n",c_time_string_aux );
-                if(tabela_exec->prox!=NULL){
-                    printf("oi :%d\n",tabela_exec->job_num );
-                }
             }
-
+            //começa a verificar o proximo job
             tabela_jobs = pop_job(tabela_jobs);   
         }
     }

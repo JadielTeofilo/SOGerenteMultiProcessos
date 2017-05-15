@@ -29,7 +29,7 @@ int is_num(const char * argv){
 		}
 	}
 }
-
+//verifica se o numero de parametros eh o correto
 int verificar_num_param(int num){
 
 	//Verifica o numero de parametros
@@ -38,13 +38,12 @@ int verificar_num_param(int num){
 		exit(0);
 	}
 }
-
+//verifica se existe arquivo executavel
 int existe_arquivo(char * arqin){
 	if(access(arqin, F_OK)==-1){
 		printf("arquivo invalido\n");
 		exit(0);
 	}
-
 }
 
 //Recebe mensagem do escalonador com o identificador do ultimo job
@@ -69,8 +68,6 @@ int pegar_ultimo_job(){
 		printf("Nenhum numero de job encontrado na fila\n");
 		exit(1);
 	}
-   	// printf("mensagem recebida = %d\n", job_anterior.job_num);
-
    	num_aux = job_anterior.job_num;
 
    	return num_aux;
@@ -86,8 +83,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 	mensagem.type = 1;
 	//define o identificador unico do job
 	mensagem.job = job_anterior;
-	// printf("job enviado: %d\n", mensagem.job);
-	
+
 	//aloca e passa o nome do executavel para a estrutura
 	strcpy(mensagem.arq_exec, arq_exec);
 
@@ -106,13 +102,6 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
     //if(msgsnd(idfila, &mensagem, sizeof(mensagem)-sizeof(long), 0) < 0){
 		printf("Problema ao enviar as info do novo job\n");
 	}
-	// Conveter para string a data
-    // char *c_time_string = ctime(&mensagem.data);
-    // printf("::job = %d\n", mensagem.job);
-    // printf("::arquivo = %s\n", mensagem.arq_exec);
-    // printf("::%s\n", c_time_string);
-
-
 }
 
 int main(int argc, char *argv[])
@@ -135,14 +124,8 @@ int main(int argc, char *argv[])
 	//Pega o job anterior atraves de uma mensagem do escalonador
 	job_anterior = pegar_ultimo_job();
 
-
 	//Cria e evia estrutura com arq_exec, novo job e data
 	criar_enviar_novo_job(job_anterior, argv[2], argv[1]);
-
-
-
-	 
-    
 
 	return 0;
 }
