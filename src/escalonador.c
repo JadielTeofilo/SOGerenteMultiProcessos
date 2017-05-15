@@ -180,23 +180,19 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
     }
 }
-
-void imprimir_executados(tipoExec* tabela_jobs){
+//imprimir informacoes de dados que jah foram executados
+void imprimir_executados(tipoExec* tabela_executados){
     tipoExec * tabela_aux;
-    char* c_time_string_data;
-    char* c_time_string_inicio;
-    char* c_time_string_fim;
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas executados:\n");
     printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
-    for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
-        c_time_string_data = ctime(&tabela_jobs->data);
-        c_time_string_inicio = ctime(&tabela_jobs->inicio);
-        c_time_string_fim = ctime(&tabela_jobs->fim);
-        tabela_aux = tabela_jobs;
+    for(;tabela_executados!=NULL; tabela_executados = tabela_executados->prox){
+
+        tabela_aux = tabela_exec;
         printf("%d          %s          %s          %s          %s", 
-        tabela_aux->job_num, tabela_aux->arq_exec, c_time_string_data, c_time_string_inicio, c_time_string_fim);
+        tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_executados->inicio), ctime(&tabela_executados->fim));
+        
     }
 
 
@@ -571,10 +567,10 @@ void montar_torus(){
 
 void shutdown(){
     //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
-    //imprime as informações dos jobs que não foram executados
-    imprimir_remanescentes(tabela_jobs);
     imprimir_executados(tabela_exec);
 
+    //imprime as informações dos jobs que não foram executados
+    imprimir_remanescentes(tabela_jobs);
     printf("Desligando o Programa...\n");
     //Exclui as filas e os semaforos utilizados
 
@@ -647,17 +643,16 @@ void escalonar(){
                         tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
 
                 tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
-                //printf("%d\n",tabela_exec->job_num );
-
+                char* c_time_string_aux;
+                c_time_string_aux = ctime(&tabela_exec->data);
+                printf("-----%s\n",c_time_string_aux );
+                if(tabela_exec->prox!=NULL){
+                    printf("oi :%d\n",tabela_exec->job_num );
+                }
             }
 
-            tabela_jobs = pop_job(tabela_jobs);
-            
+            tabela_jobs = pop_job(tabela_jobs);   
         }
-
-
-
-
     }
 }
 
