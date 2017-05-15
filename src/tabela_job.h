@@ -26,15 +26,30 @@ struct lista_tabela
 
 }typedef tipoTabela;
 
+struct lista_executados
+{
+	int job_num;
+	char arq_exec[6969];
+	time_t inicio;
+	time_t fim;
+	time_t data;
+
+	struct lista_executados * prox;
+
+}typedef tipoExec;
+
+
 
 //Definicoes de funcoes
 
 //Inicia a tabela/lista encadeada
 tipoTabela * init_job_table();
+tipoExec * init_job_table_exec();
 
 //Libera todo o espaco utilizado pela tabela
 //tipoTabela* free_job_table(tipoTabela* ptr);
 void free_job_table(tipoTabela* ptr);
+void free_job_table_exec(tipoExec* ptr_tabela);
 
 //Insere de forma ordenada na tabela de acordo com a data
 tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
@@ -45,4 +60,6 @@ tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela);
 //Retira e retorna o primeiro job da tabela
 tipoTabela* pop_job(tipoTabela * ptr_tabela);
 
+//Inserir infomaçao de execuçao de job
+tipoExec* insere_job(tipoTabela* tabela_jobs, tipoExec* tabela_exec, time_t inicio, time_t fim);
 

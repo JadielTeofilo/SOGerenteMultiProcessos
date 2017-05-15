@@ -66,6 +66,7 @@ int id_shm;
 //dados do job
 tipoTabela * tabela_jobs;
 tipoTabela * dados_job;
+tipoExec * tabela_exec;
 
 //id dos processos gerentes de execucao
 int pid_filho[16];
@@ -92,6 +93,7 @@ void libera_mem(){
     
     //libera todas as estruturas de dados utilizados
     free_job_table(tabela_jobs);
+    free_job_table_exec(tabela_exec);
     excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
     excluir_fila(idfila_shutdown);
@@ -177,6 +179,27 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         tabela_aux = tabela_jobs;
         printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
     }
+}
+
+void imprimir_executados(tipoExec* tabela_jobs){
+    tipoExec * tabela_aux;
+    char* c_time_string_data;
+    char* c_time_string_inicio;
+    char* c_time_string_fim;
+
+    //tem que acessar a lista de tabelas e percorrer ela
+    printf("\nprogramas executados:\n");
+    printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
+    for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
+        c_time_string_data = ctime(&tabela_jobs->data);
+        c_time_string_inicio = ctime(&tabela_jobs->inicio);
+        c_time_string_fim = ctime(&tabela_jobs->fim);
+        tabela_aux = tabela_jobs;
+        printf("%d          %s          %s          %s          %s", 
+        tabela_aux->job_num, tabela_aux->arq_exec, c_time_string_data, c_time_string_inicio, c_time_string_fim);
+    }
+
+
 }
 
 //realiza passar mensagem com dados para o gerente zero 
@@ -550,6 +573,7 @@ void shutdown(){
     //soh entra no if se tiver recebido a mensagem do shutdown para desligar.
     //imprime as informações dos jobs que não foram executados
     imprimir_remanescentes(tabela_jobs);
+    imprimir_executados(tabela_exec);
 
     printf("Desligando o Programa...\n");
     //Exclui as filas e os semaforos utilizados
@@ -593,6 +617,7 @@ void escalonar(){
 
     //Iniciar tabela de jobs
     tabela_jobs = init_job_table();
+    tabela_exec = init_job_table_exec();
 
     //cria os gerentes de execução segundo a topologia torus
     montar_torus();
@@ -612,12 +637,18 @@ void escalonar(){
             //Aguarda o fim da execucao de todos
             if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
                 fim = clock();
+                //passa as informacoes para a tabela de executados
+
                 //calcula o tempo de exec
                 turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
                 //converte o tempo de inicio
                 c_time_string = ctime(&tabela_jobs->data);
                 printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
                         tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
+
+                tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
+                //printf("%d\n",tabela_exec->job_num );
+
             }
 
             tabela_jobs = pop_job(tabela_jobs);

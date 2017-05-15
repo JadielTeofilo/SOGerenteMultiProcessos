@@ -18,9 +18,22 @@ tipoTabela * init_job_table(){
 	return NULL;
 }
 
+tipoExec * init_job_table_exec(){
+	return NULL;
+}
+
 //Libera todo o espaco utilizado pela tabela
 void free_job_table(tipoTabela* ptr_tabela){
 	tipoTabela * ptr_prox = ptr_tabela;
+	while(ptr_tabela!=NULL){
+		ptr_prox = ptr_tabela->prox;
+		free(ptr_tabela);
+		ptr_tabela = ptr_prox;
+	}
+}
+
+void free_job_table_exec(tipoExec* ptr_tabela){
+	tipoExec * ptr_prox = ptr_tabela;
 	while(ptr_tabela!=NULL){
 		ptr_prox = ptr_tabela->prox;
 		free(ptr_tabela);
@@ -103,3 +116,18 @@ tipoTabela * pop_job(tipoTabela * ptr_tabela){
 }
 
 
+tipoExec* insere_job(tipoTabela* tabela_jobs, tipoExec* tabela_exec, time_t inicio, time_t fim){
+	//tipoExec* tabela_aux;
+
+	tipoExec * tabela_aux = (tipoExec*) malloc(sizeof(tipoExec));
+
+	tabela_aux->fim = fim;
+    tabela_aux->inicio = inicio;
+    tabela_aux->data = tabela_jobs->data;
+    tabela_aux->job_num = tabela_jobs->job_num;
+	strcpy(tabela_aux->arq_exec, tabela_jobs->arq_exec);
+	tabela_aux->prox = tabela_exec;
+
+	return tabela_aux;
+
+}
