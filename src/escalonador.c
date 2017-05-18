@@ -77,6 +77,7 @@ int id_torus_sem[16];
 int id_torus_sem_volta[16];
 
 
+
 //Exclui as filas e os semaforos utilizados
 void fechar_filasNsems_torus(){
     int i;
@@ -152,19 +153,30 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
 
     return tabela_jobs;
 }
-//verifica se já esta na hora de algum job executar
-int checar_horario_execucao_job(tipoTabela * tabela_jobs){
+
+//Seta alarme para para o momento da execucao do job mais proximo
+int def_alrm_execucao_job(tipoTabela * tabela_jobs){
     time_t current_time = time(NULL);
+    int segundos_para_execucao = 0;
     //se a tabela for vazia, não tem programa para executar
     if(tabela_jobs==NULL){
+        return -1;
+    }
+    
+    //calcula quantos segundos falta
+    segundos_para_execucao = tabela_jobs->data - current_time;
+
+
+    if(segundos_para_execucao >= 0){
+        //seta alarme para a quantidade de segundos que falta 
+        alarm(segundos_para_execucao);
         return 0;
     }
-    //verifica se o horario atual eh maior que o horario que deveria ser executado
-    //ou seja, se já passou do horario de execução
-    if(current_time>=tabela_jobs->data){
-        return 1;
+    else{
+        //caso o horario jah tenha passado por algum motivo, envia o sinal imediatamente
+        kill(getpid(), SIGALRM);
+        return 0;
     }
-    return 0;
 }
 
 // imprimir dados dos jobs que nao foram executados
@@ -575,22 +587,76 @@ void shutdown(){
 
     //imprime as informações dos jobs que não foram executados
     imprimir_remanescentes(tabela_jobs);
-    printf("Desligando o Programa...\n");
+    // printf("Desligando o Programa...\n");
 
     //Exclui as filas e os semaforos utilizados
     libera_mem();
 
 }
 
-void escalonar(){
-    //quando receber um sinal de termino, desliga
-    signal(SIGTERM, shutdown);
-    InfoFlgTorus msg_flag;
-
+//Na chegada de um sinal avisando do horario realiza 
+void tratar_sig_horario_chegou(){
     //para a contagem do turnaround
     clock_t inicio;
     clock_t fim;
     float turnaround;
+
+    //para a conversao do time_t
+    char *c_time_string;
+
+    //para o recebimento da mensagem
+    InfoFlgTorus msg_flag;
+
+
+    //começa a contar o tempo de execuçao
+    inicio = clock();
+
+    //funcao chama os gerenciadores de execucao para executar o job
+    informar_ger_exec_zero(tabela_jobs);
+    //Aguarda o fim da execucao de todos
+    if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
+        //finaliza de contar o tempo de execução
+        fim = clock();
+
+        //calcula o tempo de exec
+        turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
+        //converte o tempo agendado
+        c_time_string = ctime(&tabela_jobs->data);
+        printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
+                tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
+        //insere dados na tabela de jobs jah executados
+        tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
+    }
+    //começa a verificar o proximo job
+    tabela_jobs = pop_job(tabela_jobs); 
+
+    //seta o alarm de novo, agora para o proximo na fila
+    def_alrm_execucao_job(tabela_jobs);
+
+}
+
+void trata_sig_novo_job(){
+    int job_num = -5;
+    if(tabela_jobs != NULL)
+        job_num = tabela_jobs->job_num;
+    //Le um novo job inserido 
+    tabela_jobs = atualiza_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
+
+    //Caso o job com tempo de execucao mais proximo tenha mudado atualiza o alarm
+    if(job_num != tabela_jobs->job_num){
+        def_alrm_execucao_job(tabela_jobs);
+    }
+}
+
+void main(){
+    //quando receber um sinal de termino, desliga
+    signal(SIGTERM, shutdown);
+    //p quando chegar aviso novo job 
+    signal(SIGUSR2, trata_sig_novo_job);
+    //p quando chegar aviso de que deu o horario 
+    signal(SIGALRM, tratar_sig_horario_chegou);
+
+
 
     //utilizado para informar valor do ultimo job
     jobNumType job_anterior;
@@ -626,45 +692,9 @@ void escalonar(){
     //cria os gerentes de execução segundo a topologia torus
     montar_torus();
 
-    //para a conversao do time_t
-    char *c_time_string;
-
+    //laco de execucao
     while(1){
-        //Le um novo job inserido 
-        tabela_jobs = atualiza_info_job(idfila_estrutura, tabela_jobs, idfila_num_job);
-
-        //funcao que dorme ate chegar o momento de executar um job
-        if(checar_horario_execucao_job(tabela_jobs)){
-            //começa a contar o tempo de execuçao
-            inicio = clock();
-
-            //funcao chama os gerenciadores de execucao para executar o job
-            informar_ger_exec_zero(tabela_jobs);
-            //Aguarda o fim da execucao de todos
-            if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
-                //finaliza de contar o tempo de execução
-                fim = clock();
-
-                //calcula o tempo de exec
-                turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
-                //converte o tempo agendado
-                c_time_string = ctime(&tabela_jobs->data);
-                printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
-                        tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
-                //insere dados na tabela de jobs jah executados
-                tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
-            }
-            //começa a verificar o proximo job
-            tabela_jobs = pop_job(tabela_jobs);   
-        }
+        //Aguarda a signals que de novo job ou de chegada de horario
+        pause();
     }
-}
-
-
-int main(int argc, char *argv[])
-{
-
-	escalonar();
-
-	return 0;
 }

@@ -124,8 +124,17 @@ int main(int argc, char *argv[])
 	//Pega o job anterior atraves de uma mensagem do escalonador
 	job_anterior = pegar_ultimo_job();
 
+    
+
 	//Cria e evia estrutura com arq_exec, novo job e data
 	criar_enviar_novo_job(job_anterior, argv[2], argv[1]);
+
+	//pega o pid do escalonador
+	int id_shm = shmget(0x1323,sizeof(int), 0x1B6);
+    int *esc_pid = shmat(id_shm, 0, 0x1B6);
+
+    //Avisa que chegou um job
+    kill(*esc_pid, SIGUSR2);
 
 	return 0;
 }
