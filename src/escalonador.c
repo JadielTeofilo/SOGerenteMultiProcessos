@@ -194,17 +194,17 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
     }
 }
 //imprimir informacoes de dados que jah foram executados
-void imprimir_executados(tipoExec* tabela_executados){
+void imprimir_executados(){
     tipoExec * tabela_aux;
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas executados:\n");
     printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
-    for(;tabela_executados!=NULL; tabela_executados = tabela_executados->prox){
+    for(;tabela_exec!=NULL; tabela_exec = tabela_exec->prox){
 
         tabela_aux = tabela_exec;
         printf("%d          %s          %s          %s          %s", 
-        tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_executados->inicio), ctime(&tabela_executados->fim));
+        tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_exec->inicio), ctime(&tabela_exec->fim));
         
     }
 }
@@ -627,6 +627,7 @@ void tratar_sig_horario_chegou(){
         //insere dados na tabela de jobs jah executados
         tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
     }
+
     //começa a verificar o proximo job
     tabela_jobs = pop_job(tabela_jobs); 
 
