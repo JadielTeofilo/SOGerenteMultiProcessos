@@ -597,33 +597,33 @@ void shutdown(){
 //Na chegada de um sinal avisando do horario realiza 
 void tratar_sig_horario_chegou(){
     //para a contagem do turnaround
-    clock_t inicio;
-    clock_t fim;
+    time_t inicio;
+    time_t fim;
     float turnaround;
-
     //para a conversao do time_t
-    char *c_time_string;
+    struct tm* timeinfo;
+
 
     //para o recebimento da mensagem
     InfoFlgTorus msg_flag;
-
-
+    
     //começa a contar o tempo de execuçao
-    inicio = clock();
+    time(&inicio);
+
 
     //funcao chama os gerenciadores de execucao para executar o job
     informar_ger_exec_zero(tabela_jobs);
     //Aguarda o fim da execucao de todos
     if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
-        //finaliza de contar o tempo de execução
-        fim = clock();
+        //marca do fim do tempo de execução
+        time(&fim);
 
         //calcula o tempo de exec
-        turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
+        turnaround = (float)(fim - inicio);
         //converte o tempo agendado
-        c_time_string = ctime(&tabela_jobs->data);
+        timeinfo = localtime ( &inicio );
         printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
-                tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
+                tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, asctime(timeinfo));
         //insere dados na tabela de jobs jah executados
         tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
     }
