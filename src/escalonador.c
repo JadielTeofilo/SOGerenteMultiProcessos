@@ -1,15 +1,10 @@
 #include "escalonador.h"
 
-//TODO \
-Tem funcoes que estao recebendo variaveis globais por parametro\
-ajeita ai shindi
 
-//TODO \
-colocar essas definicoes em outro arquivo e usar elas\
-tbm no executa postergado
-
-//TODO \
-Criar uma definicao para lados esquerdo direito cima e baixo
+#define CIMA        0
+#define DIREITA     1   
+#define BAIXO       2
+#define ESQUERDA    3
 
 #define key_fila_1 0x1223
 #define key_fila_2 0x1224
@@ -230,16 +225,16 @@ void informar_ger_exec_zero(tipoTabela * dados_job){
 int calcular_index_fila_envio(int lado, int meu_id){
     switch (lado){
         //caso de fila para cima
-        case 0: 
+        case CIMA: 
             return(meu_id*4);
         //caso de fila para a direita  
-        case 1:
+        case DIREITA:
             return((meu_id*4)+1);
         //caso de fila para baixo
-        case 2:
+        case BAIXO:
             return((meu_id*4)+2);
         //caso de fila para a esquerda
-        case 3:
+        case ESQUERDA:
             return((meu_id*4)+3);
     }
 }
@@ -251,20 +246,20 @@ int calcular_id_vizinho(int lado, int meu_id){
     int lin = meu_id/4;
     //calcula a posicao do vizinho
     switch(lado){
-        case 0:
+        case CIMA:
             lin = (lin-1)%4;
             //caso menor que zero pegar o equivalente positivo
             (lin < 0)?lin += 4 : lin;
             break;
-        case 1:
+        case DIREITA:
             col = (col+1)%4;
             (col < 0)?col += 4 : col;
             break;
-        case 2:
+        case BAIXO:
             lin = (lin+1)%4;
             (lin < 0)?lin += 4 : lin;
             break;
-        case 3:
+        case ESQUERDA:
             col = (col-1)%4;
             //caso menor que zero pegar o equivalente positivo
             (col < 0)?col += 4 : col;
@@ -279,17 +274,16 @@ int calcular_idfila_receber(int lado, int meu_id){
     //calcula a id do vizinho
     int id = calcular_id_vizinho(lado, meu_id);
 
-    //chama funcao para pegar o id da fila de retorno
-    //descobre sabendo quem deve enviar para meu_id, sabendo assim de quem meu_id deve receber
+    //descobre quem deve enviar para meu_id, sabendo assim de quem meu_id deve receber
     switch(lado){
-        case 0:
-            return calcular_index_fila_envio( 2, id);
-        case 1:
-            return calcular_index_fila_envio( 3, id);
-        case 2:
-            return calcular_index_fila_envio( 0, id);
-        case 3:
-            return calcular_index_fila_envio( 1, id);
+        case CIMA:
+            return calcular_index_fila_envio( BAIXO, id);
+        case DIREITA:
+            return calcular_index_fila_envio( ESQUERDA, id);
+        case BAIXO:
+            return calcular_index_fila_envio( CIMA, id);
+        case ESQUERDA:
+            return calcular_index_fila_envio( DIREITA, id);
     }
 }
 
