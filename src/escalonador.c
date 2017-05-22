@@ -189,17 +189,21 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
     }
 }
 //imprimir informacoes de dados que jah foram executados
-void imprimir_executados(tipoExec* tabela_executados){
+void imprimir_executados(){
     tipoExec * tabela_aux;
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas executados:\n");
     printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
-    for(;tabela_executados!=NULL; tabela_executados = tabela_executados->prox){
-
+    for(;tabela_exec!=NULL; tabela_exec = tabela_exec->prox){
+       /* struct tm* timeinfo_data = 
+        struct tm* timeinfo_inicio = ;
+        struct tm* timeinfo_fim = ;*/
         tabela_aux = tabela_exec;
-        printf("%d          %s          %s          %s          %s", 
-        tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_executados->inicio), ctime(&tabela_executados->fim));
+        printf("%d          %s          %s        ", 
+        tabela_aux->job_num, tabela_aux->arq_exec, asctime(localtime(&tabela_exec->data)));
+        printf("%s", asctime(localtime(&tabela_exec->inicio)));
+        printf("%s", asctime(localtime(&tabela_exec->fim)));
         
     }
 }
@@ -591,36 +595,40 @@ void shutdown(){
 //Na chegada de um sinal avisando do horario realiza 
 void tratar_sig_horario_chegou(){
     //para a contagem do turnaround
-    clock_t inicio;
-    clock_t fim;
+    time_t inicio;
+    time_t fim;
     float turnaround;
-
     //para a conversao do time_t
-    char *c_time_string;
+    struct tm* timeinfo;
+
 
     //para o recebimento da mensagem
     InfoFlgTorus msg_flag;
-
-
+    
     //começa a contar o tempo de execuçao
-    inicio = clock();
+    time(&inicio);
+
 
     //funcao chama os gerenciadores de execucao para executar o job
     informar_ger_exec_zero(tabela_jobs);
     //Aguarda o fim da execucao de todos
     if(msgrcv(idfila_escal_gerente0_volta, &msg_flag , sizeof(msg_flag), 4, 0) > 0){
-        //finaliza de contar o tempo de execução
-        fim = clock();
+        //marca do fim do tempo de execução
+        time(&fim);
 
         //calcula o tempo de exec
-        turnaround = (float)(fim - inicio)/ CLOCKS_PER_SEC;
+        turnaround = (float)(fim - inicio);
+         tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
         //converte o tempo agendado
-        c_time_string = ctime(&tabela_jobs->data);
+        timeinfo = localtime ( &inicio );
         printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
-                tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, c_time_string);
+                tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, asctime(timeinfo));
         //insere dados na tabela de jobs jah executados
-        tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
+        // printf("%d:%s %d:%s %d:%s\n",tabela_exec->data, asctime(localtime(&tabela_exec->data)), 
+        //tabela_exec->inicio, asctime(localtime(&tabela_exec->inicio)), tabela_exec->fim, asctime(localtime(&tabela_exec->fim)));
+       
     }
+
     //começa a verificar o proximo job
     tabela_jobs = pop_job(tabela_jobs); 
 

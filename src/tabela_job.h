@@ -18,7 +18,7 @@ struct lista_tabela
 {
 	//Dados de cada linha da tabela
 	int job_num;
-	time_t data;
+	clock_t data;
 	char arq_exec[6969];
 
 	// Para apontar para a proxima linha
@@ -30,9 +30,9 @@ struct lista_executados
 {
 	int job_num;
 	char arq_exec[6969];
-	time_t inicio;
-	time_t fim;
-	time_t data;
+	clock_t inicio;
+	clock_t fim;
+	clock_t data;
 
 	struct lista_executados * prox;
 
