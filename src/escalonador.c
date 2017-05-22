@@ -201,10 +201,14 @@ void imprimir_executados(){
     printf("\nprogramas executados:\n");
     printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
     for(;tabela_exec!=NULL; tabela_exec = tabela_exec->prox){
-
+       /* struct tm* timeinfo_data = 
+        struct tm* timeinfo_inicio = ;
+        struct tm* timeinfo_fim = ;*/
         tabela_aux = tabela_exec;
-        printf("%d          %s          %s          %s          %s", 
-        tabela_aux->job_num, tabela_aux->arq_exec, ctime(&tabela_exec->data), ctime(&tabela_exec->inicio), ctime(&tabela_exec->fim));
+        printf("%d          %s          %s        ", 
+        tabela_aux->job_num, tabela_aux->arq_exec, asctime(localtime(&tabela_exec->data)));
+        printf("%s", asctime(localtime(&tabela_exec->inicio)));
+        printf("%s", asctime(localtime(&tabela_exec->fim)));
         
     }
 }
@@ -620,12 +624,15 @@ void tratar_sig_horario_chegou(){
 
         //calcula o tempo de exec
         turnaround = (float)(fim - inicio);
+         tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
         //converte o tempo agendado
         timeinfo = localtime ( &inicio );
         printf("job = %d, arquivo = %s, turnaround = %f, execucao iniciada = %s",
                 tabela_jobs->job_num, tabela_jobs->arq_exec, turnaround, asctime(timeinfo));
         //insere dados na tabela de jobs jah executados
-        tabela_exec = insere_job(tabela_jobs, tabela_exec, inicio, fim);
+        // printf("%d:%s %d:%s %d:%s\n",tabela_exec->data, asctime(localtime(&tabela_exec->data)), 
+        //tabela_exec->inicio, asctime(localtime(&tabela_exec->inicio)), tabela_exec->fim, asctime(localtime(&tabela_exec->fim)));
+       
     }
 
     //começa a verificar o proximo job
