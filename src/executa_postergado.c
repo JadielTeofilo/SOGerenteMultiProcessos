@@ -1,5 +1,12 @@
 /***
 
+Programa serve para a comunicacao com o escalonador,
+ele avisa ao escalonador a solicitacao de execucao 
+de um novo job apos determinada quantidade de segun-
+dos
+
+
+
 Input 
 
 <seg>: delay de execucao em relacao a hora corrente
@@ -8,8 +15,9 @@ Input
 Output
 
 Atribuir um numero de job unico a tupla <arq_exec> 
-Colocar na estrutura de dados compartilhado e enviar para a fila de
-mensagens
+Colocar na estrutura de dados compartilhado e enviar 
+para a fila de mensagens
+
 **/
 
 #include "executa_postergado.h"
@@ -17,7 +25,7 @@ mensagens
 
 
 
-//Verifica se o numero de segundos eh um numero
+//Verifica se o numero de segundos entrado eh um numero
 int is_num(const char * argv){
 	int tam = strlen(argv);
 
