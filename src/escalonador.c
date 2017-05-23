@@ -183,7 +183,7 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas que não serao executados:\n");
-    printf("job         arquivo executavel      data\n");
+    printf("job         arquivo executavel      data que iria executar\n");
     for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
         c_time_string = ctime(&tabela_jobs->data);
         tabela_aux = tabela_jobs;
