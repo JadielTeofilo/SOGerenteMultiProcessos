@@ -15,9 +15,6 @@ int criar_fila(int key){
 }
 
 
-//TODO \
-Colocar aqui funcoes de utilizacao das filas
-
 
 void excluir_fila(int idfila){
    	msgctl(idfila, IPC_RMID, 0);
