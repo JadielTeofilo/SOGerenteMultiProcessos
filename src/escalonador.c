@@ -186,11 +186,12 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas que não serao executados:\n");
-    printf("job     arquivo executavel      data\n");
+    printf("job         arquivo executavel      data\n");
     for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
         c_time_string = ctime(&tabela_jobs->data);
         tabela_aux = tabela_jobs;
-        printf("%d          %s          %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
+        printf("%d          %s      %s", tabela_aux->job_num, tabela_aux->arq_exec, c_time_string);
+        printf("----------------------------------------------------------------\n");
     }
 }
 //imprimir informacoes de dados que jah foram executados
@@ -199,16 +200,15 @@ void imprimir_executados(){
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas executados:\n");
-    printf("job     arquivo executavel      tempo de submissao      inicio      termino\n");
+    printf("    job         arquivo executavel\n");
     for(;tabela_exec!=NULL; tabela_exec = tabela_exec->prox){
-       /* struct tm* timeinfo_data = 
-        struct tm* timeinfo_inicio = ;
-        struct tm* timeinfo_fim = ;*/
         tabela_aux = tabela_exec;
-        printf("%d          %s          %s        ", 
-        tabela_aux->job_num, tabela_aux->arq_exec, asctime(localtime(&tabela_exec->data)));
-        printf("%s", asctime(localtime(&tabela_exec->inicio)));
-        printf("%s", asctime(localtime(&tabela_exec->fim)));
+        printf("    %d          %s\n", 
+        tabela_aux->job_num, tabela_aux->arq_exec);
+        printf("tempo de submissão: %s", asctime(localtime(&tabela_exec->data)) );
+        printf("inicio:             %s", asctime(localtime(&tabela_exec->inicio)));
+        printf("termino:            %s", asctime(localtime(&tabela_exec->fim)));
+        printf("----------------------------------------------------------------\n");
         
     }
 }
