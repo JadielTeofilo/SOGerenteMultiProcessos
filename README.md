@@ -1,7 +1,4 @@
 # SOGerenteMultiProcessos
-
-
-## O que é?
  
  O projeto implementa um comportamento parecido com o do comando “at” no unix, após a execução do escalonador em segundo plano o programa executa postergado pode ser chamado para agendar a execução de dado arquivo binário. 
  
