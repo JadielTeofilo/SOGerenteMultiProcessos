@@ -326,7 +326,7 @@ int roteador(int meu_id){
     // |
     // 12<- 13<- 14<- 15
 
-    return (meu_id%4)? 3 : 0;
+    return (meu_id%4)? ESQUERDA : CIMA;
 }
 
 //faz loop para receber e enviar msg de fim de execucao
