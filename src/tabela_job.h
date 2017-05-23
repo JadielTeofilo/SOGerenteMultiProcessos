@@ -19,6 +19,7 @@ struct lista_tabela
 	//Dados de cada linha da tabela
 	int job_num;
 	clock_t data;
+	clock_t submissao;
 	char arq_exec[6969];
 
 	// Para apontar para a proxima linha
@@ -52,7 +53,7 @@ void free_job_table(tipoTabela* ptr);
 void free_job_table_exec(tipoExec* ptr_tabela);
 
 //Insere de forma ordenada na tabela de acordo com a data
-tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
+tipoTabela* append_job_ordenado(int job_num, time_t submissao, time_t data, char * arq_exec, tipoTabela* ptr_tabela);
 
 //Pegar um job da tabela pelo num job
 tipoTabela* get_job(int job_num, tipoTabela* ptr_tabela);

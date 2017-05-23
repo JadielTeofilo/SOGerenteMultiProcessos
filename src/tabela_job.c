@@ -46,13 +46,14 @@ int eh_vazia(tipoTabela * ptr){
 }
 
 //Insere de forma ordenada na tabela de acordo com a data
-tipoTabela* append_job_ordenado(int job_num, time_t data, char * arq_exec, tipoTabela* ptr_tabela){
+tipoTabela* append_job_ordenado(int job_num,time_t submissao, time_t data, char * arq_exec, tipoTabela* ptr_tabela){
 	//Cria um anterior para verificar a ordem e inserir no meio
 	tipoTabela * ptr_anterior;
 
 	//Cria nodo e coloca os novos dados
 	tipoTabela * ptr_new_node = (tipoTabela*) malloc(sizeof(tipoTabela));
 	ptr_new_node->data = data;
+	ptr_new_node->submissao = submissao;
 	ptr_new_node->job_num = job_num;
 	strcpy(ptr_new_node->arq_exec, arq_exec);
 	tipoTabela* ptr_inicial = ptr_tabela;
@@ -122,7 +123,7 @@ tipoExec* insere_job(tipoTabela* tabela_jobs, tipoExec* tabela_exec, time_t inic
 
 	tabela_aux->fim = fim;
     tabela_aux->inicio = inicio;
-    tabela_aux->data = tabela_jobs->data;
+    tabela_aux->data = tabela_jobs->submissao;
     tabela_aux->job_num = tabela_jobs->job_num;
 	strcpy(tabela_aux->arq_exec, tabela_jobs->arq_exec);
 	tabela_aux->prox = tabela_exec;

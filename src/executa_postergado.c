@@ -89,6 +89,7 @@ void criar_enviar_novo_job(int job_anterior, const char* arq_exec, const char* s
 
     /* Obter horario atual e somar com os segundos requisitados*/
 	mensagem.data = time(NULL) + atoi(segundos);
+	mensagem.submissao = time(NULL);
 
     //Soh pode escrever na fila caso ela jah exista, utilizando o seu id
     if(msgget(0x1224, 0x1B6) < 0){

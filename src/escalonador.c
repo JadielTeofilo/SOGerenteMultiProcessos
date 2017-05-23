@@ -137,7 +137,7 @@ tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_n
     info_job = mensagem;
 
 
-    tabela_jobs = append_job_ordenado(info_job.job, info_job.data, 
+    tabela_jobs = append_job_ordenado(info_job.job, info_job.submissao, info_job.data, 
                                         info_job.arq_exec, tabela_jobs);
 
     //envia o ultimo job atualizado

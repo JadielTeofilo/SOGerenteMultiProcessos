@@ -38,6 +38,7 @@ struct jobTable
 	int job;
 	char arq_exec[6969];
 	time_t data;
+	time_t submissao;
 
 }typedef jobInfoType;
 
