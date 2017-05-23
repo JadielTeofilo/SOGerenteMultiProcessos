@@ -84,6 +84,7 @@ void fechar_filasNsems_torus(){
         }
     }
 }
+
 //funao que soh libera as estruturas de dados
 void libera_mem(){
     
@@ -123,6 +124,7 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
+
 //se tiver mensagem do executa postergado, a lista de jobs eh atualizada
 tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
     jobInfoType mensagem;
@@ -189,6 +191,7 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         printf("----------------------------------------------------------------\n");
     }
 }
+
 //imprimir informacoes de dados que jah foram executados
 void imprimir_executados(){
     tipoExec * tabela_aux;
@@ -554,6 +557,7 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     }
 }
 
+// Realiza a criacao da estrutura torus
 void montar_torus(){
     int pid, i;
     int meu_id = 0;
@@ -589,7 +593,6 @@ void shutdown(){
 
     //Exclui as filas e os semaforos utilizados
     libera_mem();
-
 }
 
 //Na chegada de um sinal avisando do horario realiza 
@@ -634,9 +637,9 @@ void tratar_sig_horario_chegou(){
 
     //seta o alarm de novo, agora para o proximo na fila
     def_alrm_execucao_job(tabela_jobs);
-
 }
 
+// Na chegada do aviso de um novo job eh feito o tratamento do mesmo
 void trata_sig_novo_job(){
     int job_num = -5;
     if(tabela_jobs != NULL)
