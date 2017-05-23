@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <unistd.h>
 
 int main(int argc, char const *argv[])
 {
-	printf("hello world!\n");
+	printf("Hello, waiting 2 sec!\n");
+	sleep(2);
 	return 0;
 }
