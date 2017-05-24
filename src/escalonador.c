@@ -51,7 +51,6 @@ int flag_shutdown = 0;
 //Definicoes para os ids das filas
 int idfila_num_job;
 int idfila_estrutura;
-int idfila_shutdown;
 int idfila_escal_gerente0_ida;
 int idfila_escal_gerente0_volta;
 
@@ -84,7 +83,6 @@ void fechar_filasNsems_torus(){
         }
     }
 }
-
 //funao que soh libera as estruturas de dados
 void libera_mem(){
     
@@ -93,7 +91,7 @@ void libera_mem(){
     free_job_table_exec(tabela_exec);
     excluir_fila(idfila_num_job);
     excluir_fila(idfila_estrutura);
-    excluir_fila(idfila_shutdown);
+
     excluir_fila(idfila_escal_gerente0_ida);
     excluir_fila(idfila_escal_gerente0_volta);
 
@@ -124,7 +122,6 @@ void enviar_num_job(jobNumType job_anterior, int idfila){
         printf("Erro no envio da mensagem p/ a fila de mensagem\n");
     }
 }
-
 //se tiver mensagem do executa postergado, a lista de jobs eh atualizada
 tipoTabela * atualiza_info_job(int idfila, tipoTabela *tabela_jobs, int idfila_num_job){
     jobInfoType mensagem;
@@ -183,7 +180,7 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
 
     //tem que acessar a lista de tabelas e percorrer ela
     printf("\nprogramas que não serao executados:\n");
-    printf("job         arquivo executavel      data que iria executar\n");
+    printf("job         arquivo executavel      data\n");
     for(;tabela_jobs!=NULL; tabela_jobs = tabela_jobs->prox){
         c_time_string = ctime(&tabela_jobs->data);
         tabela_aux = tabela_jobs;
@@ -191,7 +188,6 @@ void imprimir_remanescentes(tipoTabela * tabela_jobs){
         printf("----------------------------------------------------------------\n");
     }
 }
-
 //imprimir informacoes de dados que jah foram executados
 void imprimir_executados(){
     tipoExec * tabela_aux;
@@ -227,7 +223,7 @@ void informar_ger_exec_zero(tipoTabela * dados_job){
         libera_mem();
     }
 }
-
+//---------------------------código do gerente de execuao-------------------------------//
 //calcula id da fila de envio para cada processo escalonador
 int calcular_index_fila_envio(int lado, int meu_id){
     switch (lado){
@@ -329,7 +325,7 @@ int roteador(int meu_id){
     // |
     // 12<- 13<- 14<- 15
 
-    return (meu_id%4)? ESQUERDA : CIMA;
+    return (meu_id%4)? 3 : 0;
 }
 
 //faz loop para receber e enviar msg de fim de execucao
@@ -522,7 +518,7 @@ void gerenciar_execucao(int meu_id, int * id_torus_fila, int * id_torus_sem){
         }
     }
 }
-
+//------------------------------fim do codigo do gerente de execucao------------------//
 //cria as filas e os semaforos
 void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     int key_fila = key_fila_6;
@@ -557,7 +553,6 @@ void criar_filasNsem_torus(int * id_torus_fila, int *id_torus_fila_sem){
     }
 }
 
-// Realiza a criacao da estrutura torus
 void montar_torus(){
     int pid, i;
     int meu_id = 0;
@@ -593,6 +588,7 @@ void shutdown(){
 
     //Exclui as filas e os semaforos utilizados
     libera_mem();
+
 }
 
 //Na chegada de um sinal avisando do horario realiza 
@@ -637,9 +633,9 @@ void tratar_sig_horario_chegou(){
 
     //seta o alarm de novo, agora para o proximo na fila
     def_alrm_execucao_job(tabela_jobs);
+
 }
 
-// Na chegada do aviso de um novo job eh feito o tratamento do mesmo
 void trata_sig_novo_job(){
     int job_num = -5;
     if(tabela_jobs != NULL)
@@ -671,14 +667,12 @@ void main(){
     //para enviar e receber mensagem de outros processos
     idfila_num_job = -1;
     idfila_estrutura = -1;
-    idfila_shutdown = -1;
     idfila_escal_gerente0_ida = -1;
     idfila_escal_gerente0_volta = -1;
     
     //Cria filas para comunicacao
     idfila_num_job = criar_fila(key_fila_1);
     idfila_estrutura = criar_fila(key_fila_2);
-    idfila_shutdown = criar_fila(key_fila_3);
     idfila_escal_gerente0_ida = criar_fila(key_fila_4);
     idfila_escal_gerente0_volta = criar_fila(key_fila_5);
 
